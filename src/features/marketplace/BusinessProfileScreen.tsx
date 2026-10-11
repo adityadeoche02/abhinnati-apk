@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { StyleSheet, Text, View, Pressable, ScrollView, ActivityIndicator, Image, Modal, Linking } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { useTranslation } from 'react-i18next';
 import { Star, MapPin, Calendar, Clock, MessageSquare, AlertTriangle, Phone } from 'lucide-react-native';
 import { useAuthStore } from '../../store/useAuthStore';
 import { CustomChevronLeft } from '../../components/common/Icons';
@@ -36,6 +37,8 @@ interface ServiceRowProps {
   isBookable: boolean;
   isAdded: boolean;
   priceLabel: string;
+  addText: string;
+  addedText: string;
   onToggle: () => void;
 }
 
@@ -45,6 +48,8 @@ const ServiceRow: React.FC<ServiceRowProps> = ({
   isBookable,
   isAdded,
   priceLabel,
+  addText,
+  addedText,
   onToggle,
 }) => {
   const scale = useSharedValue(1);
@@ -91,9 +96,7 @@ const ServiceRow: React.FC<ServiceRowProps> = ({
             isAdded ? styles.addBtnTextAdded : styles.addBtnTextUnadded,
             !isBookable && styles.addBtnTextDisabled
           ]}>
-            {isAdded 
-              ? (isMr ? 'निवडले' : 'Added') 
-              : (isMr ? 'निवडा' : 'Add')}
+            {isAdded ? addedText : addText}
           </Text>
         </View>
       </Animated.View>
@@ -145,6 +148,7 @@ const MOCK_REVIEWS = [
 ];
 
 export const BusinessProfileScreen: React.FC = () => {
+  const { t } = useTranslation();
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<RouteProps>();
   const { vendorId } = route.params;
@@ -162,18 +166,18 @@ export const BusinessProfileScreen: React.FC = () => {
 
   const isMr = preferredLanguage === 'mr';
   const strings = useMemo(() => ({
-    back: isMr ? 'मागे' : 'Back',
-    servicesTab: isMr ? 'सेवांची यादी' : 'Services',
-    reviewsTab: isMr ? 'प्रतिक्रिया' : 'Reviews',
-    btnBook: isMr ? 'निवडा' : 'Select',
-    fullyBookedTitle: isMr ? 'सध्या पूर्णपणे बुक आहे' : 'Temporarily Fully Booked',
-    fullyBookedSub: isMr ? 'नवीन अपॉइंटमेंट बुकिंग तात्पुरते बंद आहे.' : 'New appointments are temporarily suspended.',
-    pendingVerification: isMr ? 'पडताळणी प्रलंबित आहे' : 'Verification Pending',
-    pendingVerificationSub: isMr ? 'हा व्यवसाय प्रशासक पडताळणी प्रक्रियेत आहे.' : 'This business is under evaluation by administrators.',
-    noServices: isMr ? 'एकही सेवा उपलब्ध नाही.' : 'No services listed.',
-    noReviews: isMr ? 'अजून कोणतीही प्रतिक्रिया नाही.' : 'No reviews posted yet.',
-    replyTitle: isMr ? 'व्यावसायिकाचे उत्तर:' : 'Vendor response:',
-  }), [isMr]);
+    back: t('common.back'),
+    servicesTab: t('marketplace.servicesList'),
+    reviewsTab: t('marketplace.reviews'),
+    btnBook: t('marketplace.serviceAdd'),
+    fullyBookedTitle: t('marketplace.fullyBookedTitle'),
+    fullyBookedSub: t('marketplace.fullyBookedSub'),
+    pendingVerification: t('marketplace.pendingVerification'),
+    pendingVerificationSub: t('marketplace.pendingVerificationSub'),
+    noServices: t('marketplace.noServices'),
+    noReviews: t('marketplace.reviews'),
+    replyTitle: t('marketplace.vendorResponse'),
+  }), [t]);
 
   useEffect(() => {
     const fetchVendorDetails = async () => {
@@ -229,7 +233,7 @@ export const BusinessProfileScreen: React.FC = () => {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.errorContainer}>
-          <Text>व्यावसायिक सापडला नाही</Text>
+          <Text>{t('marketplace.vendorNotFound')}</Text>
         </View>
       </SafeAreaView>
     );
@@ -254,9 +258,7 @@ export const BusinessProfileScreen: React.FC = () => {
       if (s.id === 'srv-aai-3') return isMr ? 'गोड बॉक्स निवडले' : 'Sweets box selected';
       return isMr ? `${s.name_mr} निवडले` : `${s.name_en} selected`;
     }
-    return isMr 
-      ? `${selectedServices.length} सेवा निवडल्या`
-      : `${selectedServices.length} services selected`;
+    return t('marketplace.servicesSelected_other', { count: selectedServices.length });
   };
 
   return (
@@ -280,7 +282,7 @@ export const BusinessProfileScreen: React.FC = () => {
           {(vendor.reviewsCount <= 5 || vendor.id === 'vendor-aai') && (
             <View style={styles.newTag}>
               <Star size={11} color="#9A5A12" fill="#9A5A12" style={styles.tagStar} />
-              <Text style={styles.tagText}>{isMr ? "नवीन" : "New"}</Text>
+              <Text style={styles.tagText}>{t('marketplace.newTag')}</Text>
             </View>
           )}
         </View>
@@ -318,14 +320,14 @@ export const BusinessProfileScreen: React.FC = () => {
           <View style={styles.metaRow}>
             <Star size={15} color={theme.colors.marigold} fill={theme.colors.marigold} style={styles.metaStar} />
             <Text style={styles.metaText}>
-              {vendor.ratingAvg > 0 ? `${vendor.ratingAvg} (${vendor.reviewsCount})` : (isMr ? 'नवीन' : 'New')} • {isMr ? vendor.categoryNameMr : vendor.categoryNameEn} • {translateDistance(vendor.distance, isMr)}
+              {vendor.ratingAvg > 0 ? `${vendor.ratingAvg} (${vendor.reviewsCount})` : t('marketplace.newTag')} • {isMr ? vendor.categoryNameMr : vendor.categoryNameEn} • {translateDistance(vendor.distance, isMr)}
             </Text>
           </View>
 
           <View style={styles.statusRow}>
             <View style={styles.statusDot} />
             <Text style={styles.statusText}>
-              {isMr ? 'रात्री ९ वाजेपर्यंत सुरू' : 'Open till 9 PM'}
+              {t('marketplace.openTill')}
             </Text>
 
             {/* Launchers (WhatsApp/Call) if contact exists */}
@@ -348,7 +350,7 @@ export const BusinessProfileScreen: React.FC = () => {
 
         {/* Description Section */}
         <View style={styles.descSection}>
-          <Text style={styles.aboutHeaderLabel}>{isMr ? 'माहिती' : 'About'}</Text>
+          <Text style={styles.aboutHeaderLabel}>{t('marketplace.about')}</Text>
           <Text style={styles.description}>
             {isMr ? vendor.descriptionMr : vendor.descriptionEn}
           </Text>
@@ -356,7 +358,7 @@ export const BusinessProfileScreen: React.FC = () => {
 
         {/* Services List Header */}
         <Text style={styles.servicesHeaderLabel}>
-          {isMr ? 'सेवांची यादी' : 'Services'}
+          {t('marketplace.servicesList')}
         </Text>
 
         {/* Services List */}
@@ -395,6 +397,8 @@ export const BusinessProfileScreen: React.FC = () => {
                   isBookable={isBookable}
                   isAdded={isAdded}
                   priceLabel={priceLabel}
+                  addText={t('marketplace.serviceAdd')}
+                  addedText={t('marketplace.serviceAdded')}
                   onToggle={() => handleServiceToggle(service)}
                 />
               );
@@ -409,7 +413,7 @@ export const BusinessProfileScreen: React.FC = () => {
         {/* Photos Section */}
         <View style={styles.sectionHeaderRow}>
           <Text style={styles.sectionHeaderLabel}>
-            {isMr ? 'फोटो' : 'Photos'}
+            {t('marketplace.photos')}
           </Text>
         </View>
         <ScrollView
@@ -436,7 +440,7 @@ export const BusinessProfileScreen: React.FC = () => {
           style={styles.sectionHeaderRow}
         >
           <Text style={styles.sectionHeaderLabel}>
-            {isMr ? 'प्रतिक्रिया' : 'Reviews'}
+            {t('marketplace.reviews')}
           </Text>
           {!showAllReviews && (
             <Pressable onPress={() => {
@@ -446,7 +450,7 @@ export const BusinessProfileScreen: React.FC = () => {
               }, 60);
             }}>
               <Text style={styles.seeAllText}>
-                {isMr ? 'सर्व पहा' : 'See all'}
+                {t('marketplace.seeAll')}
               </Text>
             </Pressable>
           )}
@@ -461,7 +465,7 @@ export const BusinessProfileScreen: React.FC = () => {
               ))}
             </View>
             <Text style={styles.ratingSubtext}>
-              {isMr ? '३८ प्रतिक्रियांच्या आधारे' : 'Based on 38 reviews'}
+              {t('marketplace.basedOnReviews', { count: 38 })}
             </Text>
           </View>
         </View>
@@ -492,7 +496,7 @@ export const BusinessProfileScreen: React.FC = () => {
         {/* Location & Hours Section */}
         <View style={styles.sectionHeaderRow}>
           <Text style={styles.sectionHeaderLabel}>
-            {isMr ? 'स्थान आणि वेळ' : 'Location & hours'}
+            {t('marketplace.locationAndHours')}
           </Text>
         </View>
 
@@ -526,7 +530,7 @@ export const BusinessProfileScreen: React.FC = () => {
         >
           <View style={[styles.galleryPhoto, { backgroundColor: selectedPhoto || '#FFFFFF' }]}>
             <Text style={styles.galleryCloseText}>
-              {isMr ? 'बंद करण्यासाठी टॅप करा' : 'Tap to close'}
+              {t('marketplace.tapToClose')}
             </Text>
           </View>
         </Pressable>
@@ -544,7 +548,7 @@ export const BusinessProfileScreen: React.FC = () => {
             style={styles.bookBtnSubmit}
           >
             <Text style={styles.bookBtnSubmitText}>
-              {isMr ? 'बुक करा' : 'Book'}
+              {t('marketplace.bookNow')}
             </Text>
           </Pressable>
         </View>

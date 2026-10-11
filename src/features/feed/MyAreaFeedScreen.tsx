@@ -28,6 +28,7 @@ import LanguageModal from '../../components/common/LanguageModal';
 import { SwitchAreaBottomSheet } from '../../components/common/SwitchAreaBottomSheet';
 import { likeSyncService } from '../../services/likeSyncService';
 import { RootStackParamList } from '../../navigation/types';
+import { useTranslation } from 'react-i18next';
 
 type NavigationProp = StackNavigationProp<RootStackParamList, 'ResidentMain'>;
 
@@ -93,6 +94,7 @@ interface MixedFeedItem {
 
 export const MyAreaFeedScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
+  const { t } = useTranslation();
   const { preferredLanguage, activeArea, user } = useAuthStore();
   const isMr = preferredLanguage === 'mr';
   const localityName = isMr ? activeArea?.name_mr : activeArea?.name_en;
@@ -348,7 +350,7 @@ export const MyAreaFeedScreen: React.FC = () => {
           <View style={styles.createPostAvatar}>
             <Text style={styles.createPostAvatarText}>S</Text>
           </View>
-          <Text style={styles.createPostPlaceholder}>Share something from your area..</Text>
+          <Text style={styles.createPostPlaceholder}>{t('feed.createPostPlaceholder')}</Text>
         </Pressable>
 
         {/* Featured Business Card (Spotlight Card) */}
@@ -360,7 +362,7 @@ export const MyAreaFeedScreen: React.FC = () => {
               color="#9A5A12"
               style={styles.spotlightBadgeStar}
             />
-            <Text style={styles.spotlightBadgeText}>New in your area</Text>
+            <Text style={styles.spotlightBadgeText}>{t('feed.newInYourArea')}</Text>
           </View>
 
           {/* SVG linear gradient cover banner */}
@@ -381,15 +383,15 @@ export const MyAreaFeedScreen: React.FC = () => {
           </View>
 
           {/* Subtitle */}
-          <Text style={styles.spotlightSubtitle}>Bakery · Just Joined · 0.4 km</Text>
+          <Text style={styles.spotlightSubtitle}>Bakery · {t('feed.justJoined')} · 0.4 km</Text>
 
           {/* Side-by-side Action Buttons */}
           <View style={styles.spotlightButtonRow}>
             <Pressable onPress={handleViewVendor} style={styles.viewBtn}>
-              <Text style={styles.viewBtnText}>View</Text>
+              <Text style={styles.viewBtnText}>{t('bookings.viewBtn')}</Text>
             </Pressable>
             <Pressable onPress={handleBookVendor} style={styles.bookBtn}>
-              <Text style={styles.bookBtnText}>Book</Text>
+              <Text style={styles.bookBtnText}>{t('bookings.bookBtn')}</Text>
             </Pressable>
           </View>
         </View>
@@ -421,7 +423,7 @@ export const MyAreaFeedScreen: React.FC = () => {
               color="#9A5A12"
               style={styles.spotlightBadgeStar}
             />
-            <Text style={styles.spotlightBadgeText}>{isMr ? 'आपल्या परिसरातील नवीन' : 'New in your area'}</Text>
+            <Text style={styles.spotlightBadgeText}>{t('feed.newInYourArea')}</Text>
           </View>
 
           <Svg width={329} height={118} style={styles.spotlightBanner}>
@@ -440,15 +442,15 @@ export const MyAreaFeedScreen: React.FC = () => {
           </View>
 
           <Text style={styles.spotlightSubtitle}>
-            {bizCat} · {isMr ? 'नुकतेच आलेले' : 'Just Joined'} · {distance} km
+            {bizCat} · {t('feed.justJoined')} · {distance} km
           </Text>
 
           <View style={styles.spotlightButtonRow}>
             <Pressable onPress={handleAdView} style={styles.viewBtn}>
-              <Text style={styles.viewBtnText}>{isMr ? 'पहा' : 'View'}</Text>
+              <Text style={styles.viewBtnText}>{t('bookings.viewBtn')}</Text>
             </Pressable>
             <Pressable onPress={handleAdBook} style={styles.bookBtn}>
-              <Text style={styles.bookBtnText}>{isMr ? 'बुक करा' : 'Book'}</Text>
+              <Text style={styles.bookBtnText}>{t('bookings.bookBtn')}</Text>
             </Pressable>
           </View>
         </View>
@@ -498,11 +500,11 @@ export const MyAreaFeedScreen: React.FC = () => {
               color={hasLiked ? '#DA2525' : '#6B5F4E'}
               fill={hasLiked ? '#DA2525' : 'transparent'}
             />
-            <Text style={styles.postFooterText}>{item.likes} likes</Text>
+            <Text style={styles.postFooterText}>{t('feed.likesCount', { count: item.likes || 0 })}</Text>
           </Pressable>
           <View style={styles.postFooterItem}>
             <MessageCircle size={14} color="#6B5F4E" />
-            <Text style={styles.postFooterText}>{item.commentsCount} comments</Text>
+            <Text style={styles.postFooterText}>{t('feed.commentsCount', { count: item.commentsCount || 0 })}</Text>
           </View>
         </View>
       </Pressable>

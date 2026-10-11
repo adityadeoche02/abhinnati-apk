@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Plus } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../store/useAuthStore';
 import { api } from '../../api/client';
 import Svg, { Path } from 'react-native-svg';
@@ -30,6 +31,7 @@ const FourPointStar: React.FC<{ size?: number; color?: string }> = ({ size = 12,
 
 export const CreatePostScreen: React.FC = () => {
   const navigation = useNavigation();
+  const { t } = useTranslation();
   const { user, preferredLanguage, activeArea } = useAuthStore();
 
   const [content, setContent] = useState('');
@@ -44,18 +46,14 @@ export const CreatePostScreen: React.FC = () => {
     : 'Bandra West';
 
   const strings = {
-    title: isMr ? 'नवीन पोस्ट' : 'New Post',
-    subtitle: isMr
-      ? `${currentLocality} मध्ये पोस्ट करत आहे`
-      : `Posting to ${currentLocality}`,
-    placeholder: isMr
-      ? 'येथे लिहा...'
-      : 'Type here...',
-    addPhoto: isMr ? 'फोटो जोडा' : 'Add photo',
-    tagLocalIssue: isMr ? 'स्थानिक समस्या' : 'Local issue',
-    tagEvent: isMr ? 'कार्यक्रम' : 'Event',
-    tagCelebration: isMr ? 'उत्सव' : 'Celebration',
-    btnPost: isMr ? 'पोस्ट' : 'Post',
+    title: t('feed.newPostTitle'),
+    subtitle: t('feed.postingTo', { area: currentLocality }),
+    placeholder: t('feed.typeHere'),
+    addPhoto: t('feed.addPhoto'),
+    tagLocalIssue: t('feed.tagLocalIssue'),
+    tagEvent: t('feed.tagEvent'),
+    tagCelebration: t('feed.tagCelebration'),
+    btnPost: t('feed.postBtn'),
   };
 
   const getInitials = (name: string) => {

@@ -11,11 +11,13 @@ import { api } from '../../api/client';
 import { Vendor } from '../../api/mockData';
 import { CustomChevronRight, CustomBellIcon } from '../../components/common/Icons';
 import { Briefcase } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 
 type NavigationProp = StackNavigationProp<RootStackParamList>;
 
 export const ProfileDashboardScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
+  const { t } = useTranslation();
   const {
     user,
     preferredLanguage,
@@ -31,13 +33,13 @@ export const ProfileDashboardScreen: React.FC = () => {
   const isMr = preferredLanguage === 'mr';
 
   const strings = {
-    title: isMr ? 'प्रोफाईल' : 'Profile',
-    subtextManage: isMr ? 'तुम्ही हा व्यवसाय व्यवस्थापित करता' : 'You manage this business',
-    btnSwitchMode: isMr ? 'व्यावसायिक मोड वर जा' : 'Switch to vendor mode',
-    btnRegisterVendor: isMr ? 'व्यवसाय नोंदणी करा' : 'Register Now',
-    defaultName: 'Sneha Patil',
-    defaultPhone: '+91 9867 626 610',
-    defaultLocation: 'Bandra West',
+    title: t('profile.title'),
+    subtextManage: t('profile.manageBusinessSub'),
+    btnSwitchMode: t('profile.switchToVendor'),
+    btnRegisterVendor: t('profile.registerVendor'),
+    defaultName: user?.name || 'Sneha Patil',
+    defaultPhone: user?.phone || '+91 9867 626 610',
+    defaultLocation: activeArea ? (isMr ? activeArea.name_mr : activeArea.name_en) : 'Bandra West',
   };
 
   const fetchVendorStatus = async () => {
@@ -132,7 +134,7 @@ export const ProfileDashboardScreen: React.FC = () => {
                   color: !vendor ? '#8A7C66' : vendor.kycStatus === 'approved' ? '#2E7D52' : '#9A5A12',
                 }
               ]}>
-                {!vendor ? (isMr ? 'नोंदणी नाही' : 'Not Registered') : vendor.kycStatus === 'approved' ? (isMr ? 'मंजूर' : 'Approved') : (isMr ? 'पुनरावलोकन' : 'Under Review')}
+                {!vendor ? t('profile.notRegistered') : vendor.kycStatus === 'approved' ? t('profile.approved') : t('profile.underReview')}
               </Text>
             </View>
             
@@ -151,7 +153,7 @@ export const ProfileDashboardScreen: React.FC = () => {
               style={styles.switchBtn}
             >
               <Text style={styles.switchBtnText}>
-                {!vendor ? strings.btnRegisterVendor : vendor.kycStatus === 'approved' ? strings.btnSwitchMode : (isMr ? 'पडताळणी तपासा' : 'Check Status')}
+                {!vendor ? strings.btnRegisterVendor : vendor.kycStatus === 'approved' ? strings.btnSwitchMode : t('profile.checkKycStatus')}
               </Text>
             </Pressable>
           </View>
@@ -161,13 +163,13 @@ export const ProfileDashboardScreen: React.FC = () => {
         <View style={styles.menuList}>
           {/* Item 1: Edit Profile */}
           <Pressable onPress={() => navigation.navigate('EditProfile')} style={styles.menuItem}>
-            <Text style={styles.menuItemText}>{isMr ? 'प्रोफाईल संपादित करा' : 'Edit profile'}</Text>
+            <Text style={styles.menuItemText}>{t('profile.editProfile')}</Text>
             <CustomChevronRight size={14} color="#C9A877" strokeWidth={3.5} />
           </Pressable>
 
           {/* Item 2: Language */}
           <Pressable onPress={handleLanguageToggle} style={styles.menuItem}>
-            <Text style={styles.menuItemText}>{isMr ? 'भाषा' : 'Language'}</Text>
+            <Text style={styles.menuItemText}>{t('profile.language')}</Text>
             <View style={styles.menuItemRight}>
               <Text style={styles.langValue}>मराठी / EN</Text>
               <CustomChevronRight size={14} color="#C9A877" strokeWidth={3.5} />
@@ -176,19 +178,19 @@ export const ProfileDashboardScreen: React.FC = () => {
 
           {/* Item 3: Saved */}
           <Pressable onPress={() => Alert.alert('Saved items list')} style={styles.menuItem}>
-            <Text style={styles.menuItemText}>{isMr ? 'जतन केलेले' : 'Saved'}</Text>
+            <Text style={styles.menuItemText}>{t('profile.saved')}</Text>
             <CustomChevronRight size={14} color="#C9A877" strokeWidth={3.5} />
           </Pressable>
 
           {/* Item 4: Settings */}
           <Pressable onPress={() => navigation.navigate('Settings')} style={styles.menuItem}>
-            <Text style={styles.menuItemText}>{isMr ? 'सेटिंग्ज' : 'Settings'}</Text>
+            <Text style={styles.menuItemText}>{t('profile.settings')}</Text>
             <CustomChevronRight size={14} color="#C9A877" strokeWidth={3.5} />
           </Pressable>
 
           {/* Item 5: Help & Support */}
           <Pressable onPress={() => navigation.navigate('HelpSupport')} style={styles.menuItem}>
-            <Text style={styles.menuItemText}>{isMr ? 'मदत आणि सहकार्य' : 'Help & support'}</Text>
+            <Text style={styles.menuItemText}>{t('profile.helpSupport')}</Text>
             <CustomChevronRight size={14} color="#C9A877" strokeWidth={3.5} />
           </Pressable>
         </View>

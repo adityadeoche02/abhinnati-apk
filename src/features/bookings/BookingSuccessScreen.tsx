@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, Pressable, ActivityIndicator, Dimensions } from
 import Svg, { Path } from 'react-native-svg';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { useTranslation } from 'react-i18next';
 import Animated, { useSharedValue, useAnimatedStyle, withSpring, withDelay } from 'react-native-reanimated';
 import { useAuthStore } from '../../store/useAuthStore';
 import { RootStackParamList } from '../../navigation/types';
@@ -14,6 +15,7 @@ type NavigationProp = StackNavigationProp<RootStackParamList, 'BookingSuccess'>;
 type RouteProps = RouteProp<RootStackParamList, 'BookingSuccess'>;
 
 export const BookingSuccessScreen: React.FC = () => {
+  const { t } = useTranslation();
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<RouteProps>();
   const { bookingId } = route.params;
@@ -24,11 +26,11 @@ export const BookingSuccessScreen: React.FC = () => {
   const isMr = preferredLanguage === 'mr';
 
   const strings = {
-    title: isMr ? 'बुकिंगची विनंती केली!' : 'Booking Requested',
-    notified: isMr ? 'व्यावसायिकाला कळवले गेले आहे आणि ते लवकरच\nबुकिंग विनंती स्वीकारतील' : 'The vendor has been notified and will accept\nbooking request soon',
-    btnBack: isMr ? 'परत जा' : 'Back to area',
-    btnView: isMr ? 'बुकिंग तपासा' : 'View booking',
-    loading: isMr ? 'तपशील लोड करत आहे...' : 'Loading details...',
+    title: t('bookings.bookingRequestedTitle'),
+    notified: t('bookings.vendorNotifiedSub'),
+    btnBack: t('bookings.btnBackToArea'),
+    btnView: t('bookings.btnViewBooking'),
+    loading: t('bookings.loadingDetails'),
   };
 
   const rosetteScale = useSharedValue(0);

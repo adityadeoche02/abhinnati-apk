@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, TextInput, ActivityIndicator, Pressable, ScrollView, Alert } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { useTranslation } from 'react-i18next';
 import { ChevronLeft, Star } from 'lucide-react-native';
 import { useAuthStore } from '../../store/useAuthStore';
 import { theme } from '../../constants/theme';
@@ -17,6 +18,7 @@ type NavigationProp = StackNavigationProp<RootStackParamList, 'ReviewReply'>;
 type RouteProps = RouteProp<RootStackParamList, 'ReviewReply'>;
 
 export const ReviewReplyScreen: React.FC = () => {
+  const { t } = useTranslation();
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<RouteProps>();
   const { reviewId, userName, commentText } = route.params;
@@ -29,15 +31,15 @@ export const ReviewReplyScreen: React.FC = () => {
   const isMr = preferredLanguage === 'mr';
 
   const strings = {
-    back: isMr ? 'मागे' : 'Back',
-    title: isMr ? 'अभिप्राय प्रतिसाद' : 'Review Reply',
-    reviewHeader: isMr ? 'ग्राहकाचा अभिप्राय' : 'Customer Review',
-    replyLabel: isMr ? 'आपला प्रतिसाद:' : 'Your Reply:',
-    placeholderReply: isMr ? 'आपला प्रतिसाद लिहा...' : 'Type your reply...',
-    btnSubmit: isMr ? 'प्रतिसाद पाठवा' : 'Send Reply',
-    fillAll: isMr ? 'कृपया प्रतिसाद मसुदा प्रविष्ट करा.' : 'Please enter a reply text.',
-    loading: isMr ? 'माहिती लोड होत आहे...' : 'Loading review...',
-    noVendor: isMr ? 'व्यवसाय प्रोफाइल आढळले नाही.' : 'Vendor profile not found.',
+    back: t('common.back'),
+    title: t('vendor.reviewReplyTitle'),
+    reviewHeader: t('vendor.customerReviewHeader'),
+    replyLabel: t('vendor.yourReply'),
+    placeholderReply: t('vendor.typeReplyPlaceholder'),
+    btnSubmit: t('vendor.sendReplyBtn'),
+    fillAll: t('vendor.pleaseEnterReply'),
+    loading: t('bookings.loadingDetails'),
+    noVendor: t('vendor.noVendorProfile'),
   };
 
   const [review, setReview] = useState<any | null>(null);

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, Pressable, TextInput, KeyboardAvoidingView, Platform, Alert, ScrollView, Image } from 'react-native';
+import { StyleSheet, Text, View, Pressable, TextInput, KeyboardAvoidingView, Platform, Alert, ScrollView, Image, AlertButton } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useAuthStore } from '../../store/useAuthStore';
@@ -19,7 +19,7 @@ export const EditProfileScreen: React.FC = () => {
   const [isAreaSheetVisible, setIsAreaSheetVisible] = useState(false);
 
   const handleChangePhoto = () => {
-    const options = [
+    const options: AlertButton[] = [
       {
         text: isMr ? 'कॅमेरा' : 'Camera',
         onPress: async () => {

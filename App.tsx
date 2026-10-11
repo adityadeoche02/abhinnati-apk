@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { StatusBar, StyleSheet, LogBox } from 'react-native';
 LogBox.ignoreAllLogs();
+import './src/i18n';
 import { NavigationContainer } from '@react-navigation/native';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';

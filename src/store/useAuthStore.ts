@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Area } from '../api/mockData';
 import { api } from '../api/client';
+import i18n from '../i18n';
 
 interface UserProfile {
   id: string;
@@ -74,10 +75,13 @@ export const useAuthStore = create<AuthState>((set) => ({
         }
       }
 
+      const initialLang = (storedLang as 'mr' | 'en') || 'mr';
+      await i18n.changeLanguage(initialLang);
+
       set({
         user: userObj,
         isAuthenticated: !!storedUser,
-        preferredLanguage: (storedLang as 'mr' | 'en') || 'mr',
+        preferredLanguage: initialLang,
         activeArea: storedArea ? JSON.parse(storedArea) : null,
         deviceGps: storedGps ? JSON.parse(storedGps) : null,
         tempArea: null,
@@ -93,6 +97,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   setLanguage: async (lang: 'mr' | 'en') => {
     await AsyncStorage.setItem(STORAGE_KEYS.LANG, lang);
+    await i18n.changeLanguage(lang);
     set({ preferredLanguage: lang });
   },
 

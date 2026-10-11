@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { StyleSheet, Text, View, ScrollView, Pressable, ActivityIndicator } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../store/useAuthStore';
 import { theme } from '../../constants/theme';
 import { horizontalScale, verticalScale, moderateScale } from '../../hooks/useScale';
@@ -10,6 +11,7 @@ import { api } from '../../api/client';
 import { Vendor, Service } from '../../api/mockData';
 
 export const ManageServicesScreen: React.FC = () => {
+  const { t } = useTranslation();
   const { user, preferredLanguage } = useAuthStore();
   const navigation = useNavigation<any>();
   
@@ -48,11 +50,11 @@ export const ManageServicesScreen: React.FC = () => {
   const isMr = preferredLanguage === 'mr';
 
   const strings = {
-    title: isMr ? 'सेवा सूची' : 'Services',
-    servicesCount: (count: number) => isMr ? `${count} सेवा` : `${count} Services`,
-    available: isMr ? 'उपलब्ध' : 'Available',
-    paused: isMr ? 'पॉज केले' : 'Paused',
-    addService: isMr ? '+ सेवा जोडा' : '+ Add a service',
+    title: t('vendor.servicesListTitle'),
+    servicesCount: (count: number) => t('vendor.servicesCount', { count }),
+    available: t('vendor.available'),
+    paused: t('vendor.paused'),
+    addService: t('vendor.addServiceBtn'),
   };
 
   const loadVendorProfile = async () => {

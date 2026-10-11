@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { StyleSheet, Text, View, Pressable, ActivityIndicator, FlatList, RefreshControl } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../store/useAuthStore';
 import { api } from '../../api/client';
 import { CustomChevronLeft } from '../../components/common/Icons';
@@ -17,6 +18,7 @@ type NavigationProp = StackNavigationProp<RootStackParamList>;
 type RouteProps = RouteProp<RootStackParamList, 'SearchResults'>;
 
 export const SearchResultsScreen: React.FC = () => {
+  const { t } = useTranslation();
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<RouteProps>();
   const { categorySlug, query } = route.params;
@@ -40,16 +42,14 @@ export const SearchResultsScreen: React.FC = () => {
 
   const isMr = preferredLanguage === 'mr';
   const localityName = isMr ? activeArea?.name_mr : activeArea?.name_en;
-  const displayLocality = localityName || (isMr ? 'वांद्रे पश्चिम' : 'Bandra West');
+  const displayLocality = localityName || t('marketplace.defaultLocality');
 
   const strings = {
     resultsCount: (count: number) =>
-      isMr
-        ? `${count} व्यावसायिक ${displayLocality} जवळ`
-        : `${count} service providers near ${displayLocality}`,
-    noResults: isMr ? 'कोणतेही व्यावसायिक आढळले नाहीत!' : 'No service providers found!',
-    noResultsSub: isMr ? 'कृपया दुसरा शब्द वापरून पहा.' : 'Try searching another keyword.',
-    view: isMr ? 'पहा' : 'View',
+      t('marketplace.resultsCount', { count, locality: displayLocality }),
+    noResults: t('marketplace.noResults'),
+    noResultsSub: t('marketplace.noResultsSub'),
+    view: t('marketplace.view'),
   };
 
   // Debounce search query
@@ -178,7 +178,7 @@ export const SearchResultsScreen: React.FC = () => {
       {/* Search Input Row */}
       <View style={styles.searchRow}>
         <SearchBar
-          placeholder={isMr ? 'शोध...' : 'Search...'}
+          placeholder={t('marketplace.searchShortPlaceholder')}
           value={searchQuery}
           onChangeText={setSearchQuery}
           onSubmitEditing={handleSearchSubmit}
@@ -187,23 +187,23 @@ export const SearchResultsScreen: React.FC = () => {
 
       {/* Filter Chips Bar */}
       <View style={styles.filterBar}>
-        <FilterChip label={isMr ? 'फिल्टर्स' : 'Filters'} isStaticLabel={true} />
+        <FilterChip label={t('marketplace.filters')} isStaticLabel={true} />
 
         <FilterChip
-          label={isMr ? '४ ★ आणि वर' : '4★ & up'}
+          label={t('marketplace.filterRating')}
           isActive={ratingFilter}
           onPress={toggleRatingFilter}
           showStar={true}
         />
 
         <FilterChip
-          label={isMr ? 'पडताळणी झालेले' : 'Verified'}
+          label={t('marketplace.filterVerified')}
           isActive={verifiedFilter}
           onPress={toggleVerifiedFilter}
         />
 
         <FilterChip
-          label={isMr ? 'क्रमवारी' : 'Sort'}
+          label={t('marketplace.filterSort')}
           isActive={sortBy !== 'none'}
           onPress={toggleSortFilter}
         />
@@ -227,7 +227,7 @@ export const SearchResultsScreen: React.FC = () => {
                 layout="list"
                 title={isMr ? item.businessNameMr : item.businessNameEn}
                 category={isMr ? item.categoryNameMr : item.categoryNameEn}
-                distance={isMr ? `${item.distanceVal?.toFixed(1)} किमी` : `${item.distanceVal?.toFixed(1)} km`}
+                distance={`${item.distanceVal?.toFixed(1)} ${t('marketplace.kmSuffix')}`}
                 rating={item.ratingAvg}
                 reviewsCount={item.reviewsCount}
                 isVerified={item.verified}

@@ -44,6 +44,7 @@ import CategoryCard from '../../components/common/CategoryCard';
 import BusinessCard from '../../components/common/BusinessCard';
 import { api } from '../../api/client';
 import { theme } from '../../theme';
+import { useTranslation } from 'react-i18next';
 
 type NavigationProp = StackNavigationProp<RootStackParamList>;
 
@@ -57,6 +58,7 @@ const categoryIconMap: Record<string, React.FC<any>> = {
 
 export const ExploreScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
+  const { t } = useTranslation();
   const { preferredLanguage, activeArea, setLanguage } = useAuthStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
@@ -80,13 +82,13 @@ export const ExploreScreen: React.FC = () => {
   const displayLocality = localityName || (isMr ? 'वांद्रे पश्चिम' : 'Bandra West');
 
   const strings = {
-    searchPlaceholder: isMr ? 'सेवा किंवा व्यवसाय शोधा' : 'Search service or business',
-    browseTitle: isMr ? 'वर्गवारी ब्राउझ करा' : 'Browse categories',
-    popularTitle: isMr ? 'तुमच्या जवळील लोकप्रिय' : 'Popular near you',
-    noResults: isMr ? 'कोणतेही व्यावसायिक आढळले नाहीत' : 'No service providers found',
-    errorText: isMr ? 'डेटा लोड करण्यात अयशस्वी' : 'Failed to load explore data',
-    retryBtn: isMr ? 'पुन्हा प्रयत्न करा' : 'Retry',
-    loadingText: isMr ? 'लोड होत आहे...' : 'Loading...',
+    searchPlaceholder: t('marketplace.searchServicePlaceholder'),
+    browseTitle: t('marketplace.browseCategories'),
+    popularTitle: t('marketplace.popularNearYou'),
+    noResults: t('marketplace.noProvidersFound'),
+    errorText: t('marketplace.failedToLoad'),
+    retryBtn: t('common.retry'),
+    loadingText: t('common.loading'),
   };
 
   // 1. Fetch explore home screen data
