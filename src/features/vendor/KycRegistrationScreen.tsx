@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, ScrollView, Pressable, ActivityIndicator, TextI
 import Svg, { Path } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { useTranslation } from 'react-i18next';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { api } from '../../api/client';
 import { useAuthStore } from '../../store/useAuthStore';
@@ -14,6 +15,7 @@ import { fileUploadService, KYCFile } from '../../services/fileUploadService';
 type NavigationProp = StackNavigationProp<RootStackParamList>;
 
 export const KycRegistrationScreen: React.FC = () => {
+  const { t } = useTranslation();
   const navigation = useNavigation<NavigationProp>();
   const { user, preferredLanguage } = useAuthStore();
 
@@ -40,13 +42,13 @@ export const KycRegistrationScreen: React.FC = () => {
   const isMr = preferredLanguage === 'mr';
 
   const strings = {
-    back: isMr ? 'मागे' : 'Register your business',
-    bizNameLabel: isMr ? 'व्यवसायाचे नाव' : 'Business name',
-    categoryLabel: isMr ? 'श्रेणी' : 'Category',
-    areaLabel: isMr ? 'परिसर' : 'Area',
-    docsLabel: isMr ? 'आधार पडताळणी' : 'Aadhaar Verification',
-    btnSubmit: isMr ? 'पुनरावलोकनासाठी सबमिट करा' : 'Submit for review',
-    successMsg: isMr ? 'नोंदणी यशस्वीरित्या सबमिट केली!' : 'Registration submitted for review!',
+    back: t('vendor.registerBusiness'),
+    bizNameLabel: t('vendor.businessName'),
+    categoryLabel: t('vendor.category'),
+    areaLabel: t('vendor.area'),
+    docsLabel: t('vendor.aadhaarVerification'),
+    btnSubmit: t('vendor.submitForReview'),
+    successMsg: t('vendor.registrationSuccess'),
   };
 
   const categories = [

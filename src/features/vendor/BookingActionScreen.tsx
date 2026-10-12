@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, ScrollView, Pressable, ActivityIndicator, Linking, Alert } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { useTranslation } from 'react-i18next';
 import { ChevronLeft, Phone, Calendar, Clock, CreditCard, FileText, Check, X, Navigation, Play, CheckCircle } from 'lucide-react-native';
 import { useAuthStore } from '../../store/useAuthStore';
 import { theme } from '../../constants/theme';
@@ -18,6 +19,7 @@ type NavigationProp = StackNavigationProp<RootStackParamList, 'BookingAction'>;
 type RouteProps = RouteProp<RootStackParamList, 'BookingAction'>;
 
 export const BookingActionScreen: React.FC = () => {
+  const { t } = useTranslation();
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<RouteProps>();
   const { bookingId } = route.params;
@@ -30,35 +32,35 @@ export const BookingActionScreen: React.FC = () => {
   const isMr = preferredLanguage === 'mr';
 
   const strings = {
-    back: isMr ? 'मागे' : 'Back',
-    title: isMr ? 'ऑर्डर तपशील' : 'Order Details',
-    clientSection: isMr ? 'ग्राहक माहिती' : 'Client Information',
-    serviceSection: isMr ? 'सेवेचा तपशील' : 'Service Details',
-    paymentSection: isMr ? 'पेमेंट तपशील' : 'Payment Details',
-    btnCall: isMr ? 'कॉल करा' : 'Call Client',
-    btnAccept: isMr ? 'स्वीकारा' : 'Accept Request',
-    btnDecline: isMr ? 'नाकारा' : 'Decline Request',
-    lblDate: isMr ? 'तारीख:' : 'Date:',
-    lblTime: isMr ? 'वेळ:' : 'Time Slot:',
-    lblNotes: isMr ? 'विशेष सूचना:' : 'Notes:',
-    lblPayment: isMr ? 'पद्धत:' : 'Method:',
-    lblAmount: isMr ? 'एकूण रक्कम:' : 'Total Amount:',
-    statusLabel: isMr ? 'सध्याची स्थिती:' : 'Current Status:',
-    trackingLabel: isMr ? 'प्रगती ट्रॅकिंग:' : 'Tracking Stage:',
-    loading: isMr ? 'माहिती लोड होत आहे...' : 'Loading order details...',
-    paymentCod: isMr ? 'रोख रक्कम (COD)' : 'Cash on Delivery (COD)',
-    paymentOnline: isMr ? 'ऑनलाइन पेमेंट' : 'Online Payment',
-    declineConfirm: isMr ? 'आपण ही बुकिंग विनंती नाकारू इच्छिता का?' : 'Are you sure you want to decline this request?',
-    declineTitle: isMr ? 'विनंती नाकारा' : 'Decline Request',
-    cancel: isMr ? 'रद्द करा' : 'Cancel',
-    decline: isMr ? 'नाकारा' : 'Decline',
-    stageEnRoute: isMr ? 'येण्यास निघाले' : 'Start Travel',
-    stageInProgress: isMr ? 'काम सुरू करा' : 'Start Work',
-    stageCompleted: isMr ? 'काम पूर्ण झाले' : 'Mark Completed',
-    trackingOrdered: isMr ? 'मंजूर' : 'Approved',
-    trackingEnRoute: isMr ? 'येत आहे' : 'En Route',
-    trackingInProgress: isMr ? 'काम सुरू आहे' : 'In Progress',
-    trackingCompleted: isMr ? 'काम पूर्ण झाले' : 'Job Done',
+    back: t('common.back'),
+    title: t('vendor.orderDetailsTitle'),
+    clientSection: t('vendor.clientInfo'),
+    serviceSection: t('vendor.serviceDetails'),
+    paymentSection: t('vendor.paymentDetails'),
+    btnCall: t('vendor.btnCallClient'),
+    btnAccept: t('vendor.btnAcceptRequest'),
+    btnDecline: t('vendor.btnDeclineRequest'),
+    lblDate: t('vendor.dateLabel'),
+    lblTime: t('vendor.timeSlotLabel'),
+    lblNotes: t('vendor.notesLabel'),
+    lblPayment: t('vendor.methodLabel'),
+    lblAmount: t('vendor.totalAmountLabel'),
+    statusLabel: t('vendor.currentStatusLabel'),
+    trackingLabel: t('vendor.trackingStageLabel'),
+    loading: t('bookings.loadingDetails'),
+    paymentCod: t('vendor.codPayment'),
+    paymentOnline: t('vendor.onlinePayment'),
+    declineConfirm: t('vendor.declineConfirmMsg'),
+    declineTitle: t('vendor.declineTitle'),
+    cancel: t('common.cancel'),
+    decline: t('vendor.reject'),
+    stageEnRoute: t('vendor.stageStartTravel'),
+    stageInProgress: t('vendor.stageStartWork'),
+    stageCompleted: t('vendor.stageMarkDone'),
+    trackingOrdered: t('vendor.trackingApproved'),
+    trackingEnRoute: t('vendor.trackingEnRoute'),
+    trackingInProgress: t('vendor.trackingInProgress'),
+    trackingCompleted: t('vendor.trackingJobDone'),
   };
 
   const loadBookingDetails = async () => {
@@ -68,7 +70,7 @@ export const BookingActionScreen: React.FC = () => {
         const v = await api.getVendorByUserId(user.id);
         if (v) {
           const all = await api.getBookings(undefined, v.id);
-          const match = all.find(b => b.id === bookingId);
+          const match = all.find((b: any) => b.id === bookingId);
           if (match) {
             setBooking(match);
           }

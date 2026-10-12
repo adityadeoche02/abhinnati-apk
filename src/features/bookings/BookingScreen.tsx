@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, Pressable, ScrollView, FlatList, ActivityIndicator } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { useTranslation } from 'react-i18next';
 import { Calendar as CalendarIcon, Clock, MessageSquare } from 'lucide-react-native';
 import { useAuthStore } from '../../store/useAuthStore';
 import { CustomChevronLeft } from '../../components/common/Icons';
@@ -34,6 +35,7 @@ const TIME_SLOTS = [
 ];
 
 export const BookingScreen: React.FC = () => {
+  const { t } = useTranslation();
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<RouteProps>();
   const { preferredLanguage } = useAuthStore();
@@ -55,15 +57,15 @@ export const BookingScreen: React.FC = () => {
 
   const isMr = preferredLanguage === 'mr';
   const strings = {
-    back: isMr ? 'मागे' : 'Back',
-    title: isMr ? 'वेळ निवडा' : 'Choose a slot',
-    serviceHeader: isMr ? 'निवडलेली सेवा' : 'Selected Service',
-    dateHeader: isMr ? 'तारीख' : 'Date',
-    timeHeader: isMr ? 'वेळ' : 'Time',
-    notesHeader: isMr ? 'विशेष सूचना (पर्यायी)' : 'Special Instructions (Optional)',
-    notesPlaceholder: isMr ? 'उदा. घराचा पत्ता, जवळची खूण किंवा कामाचे तपशील...' : 'e.g. house address, landmark, or specific details...',
-    btnPay: isMr ? 'पुढे जा' : 'Continue',
-    noSlots: isMr ? 'या तारखेला कोणतीही वेळ रिकामी नाही.' : 'No slots available for this date.',
+    back: t('common.back'),
+    title: t('bookings.chooseSlot'),
+    serviceHeader: t('bookings.selectedService'),
+    dateHeader: t('bookings.dateHeader'),
+    timeHeader: t('bookings.timeHeader'),
+    notesHeader: t('bookings.notesHeader'),
+    notesPlaceholder: t('bookings.notesPlaceholder'),
+    btnPay: t('bookings.btnContinue'),
+    noSlots: t('bookings.noSlots'),
   };
 
   // Generate next 3 days for the calendar layout to match Figma
@@ -142,7 +144,7 @@ export const BookingScreen: React.FC = () => {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.errorContainer}>
-          <Text>कोणतीही सेवा निवडली नाही.</Text>
+          <Text>{t('bookings.noServiceSelected')}</Text>
         </View>
       </SafeAreaView>
     );

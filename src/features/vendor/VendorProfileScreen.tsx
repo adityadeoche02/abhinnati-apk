@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { StyleSheet, Text, View, Pressable, ScrollView, ActivityIndicator, Image } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { useTranslation } from 'react-i18next';
 import { ChevronRight, Bell, Briefcase } from 'lucide-react-native';
 import { useAuthStore } from '../../store/useAuthStore';
 import { theme } from '../../constants/theme';
@@ -9,16 +10,19 @@ import { RootStackParamList } from '../../navigation/types';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { api } from '../../api/client';
 import { Vendor } from '../../api/mockData';
+import { LanguageModal } from '../../components/common/LanguageModal';
 import Svg, { Path } from 'react-native-svg';
 
 type NavigationProp = StackNavigationProp<RootStackParamList>;
 
 export const VendorProfileScreen: React.FC = () => {
+  const { t } = useTranslation();
   const navigation = useNavigation<NavigationProp>();
-  const { user, preferredLanguage, activeArea, setUserMode, logout } = useAuthStore();
+  const { user, preferredLanguage, activeArea, setUserMode, logout, setLanguage } = useAuthStore();
   
   const [vendor, setVendor] = useState<Vendor | null>(null);
   const [loading, setLoading] = useState(true);
+  const [langModalVisible, setLangModalVisible] = useState(false);
 
   const isMr = preferredLanguage === 'mr';
 
@@ -67,9 +71,9 @@ export const VendorProfileScreen: React.FC = () => {
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       {/* Header Profile Title Row */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>{isMr ? 'प्रोफाईल' : 'Profile'}</Text>
+        <Text style={styles.headerTitle}>{t('vendor.profileTitle')}</Text>
         <View style={styles.headerRight}>
-          <Pressable style={styles.langBtn}>
+          <Pressable onPress={() => setLangModalVisible(true)} style={styles.langBtn}>
             <Text style={styles.langBtnText}>{isMr ? 'मराठी' : 'EN'}</Text>
           </Pressable>
           <Pressable onPress={() => navigation.navigate('Alerts')} style={styles.bellBtn} hitSlop={10}>
@@ -111,13 +115,13 @@ export const VendorProfileScreen: React.FC = () => {
           <Text style={styles.businessName}>{businessName}</Text>
           
           <View style={styles.approvedBadge}>
-            <Text style={styles.approvedBadgeText}>{isMr ? 'पडताळणीकृत' : 'Approved'}</Text>
+            <Text style={styles.approvedBadgeText}>{t('vendor.approved')}</Text>
           </View>
 
-          <Text style={styles.manageLabel}>{isMr ? 'तुम्ही या व्यवसायाचे व्यवस्थापन करता' : 'You manage this business'}</Text>
+          <Text style={styles.manageLabel}>{t('vendor.manageBusinessLabel')}</Text>
 
           <Pressable onPress={handleSwitchToResident} style={styles.switchButton}>
-            <Text style={styles.switchButtonText}>{isMr ? 'युझर मोडवर स्विच करा' : 'Switch to User mode'}</Text>
+            <Text style={styles.switchButtonText}>{t('vendor.switchToUserMode')}</Text>
           </Pressable>
         </View>
 
@@ -125,46 +129,56 @@ export const VendorProfileScreen: React.FC = () => {
         <View style={styles.menuList}>
           {/* Edit Profile (routes to ManageBusinessScreen) */}
           <Pressable onPress={() => navigation.navigate('ManageBusiness')} style={styles.menuItem}>
-            <Text style={styles.menuItemText}>{isMr ? 'प्रोफाइल संपादन' : 'Edit profile'}</Text>
+            <Text style={styles.menuItemText}>{t('vendor.editProfileMenu')}</Text>
             <ChevronRight size={16} color="#C2B193" strokeWidth={3} />
           </Pressable>
 
           {/* Language */}
-          <Pressable style={styles.menuItem}>
+          <Pressable onPress={() => setLangModalVisible(true)} style={styles.menuItem}>
             <View style={styles.menuItemLeft}>
-              <Text style={styles.menuItemText}>{isMr ? 'भाषा' : 'Language'}</Text>
+              <Text style={styles.menuItemText}>{t('vendor.languageMenu')}</Text>
             </View>
             <View style={styles.menuItemRight}>
-              <Text style={styles.langDisplay}>मराठी / EN</Text>
+              <Text style={styles.langDisplay}>{isMr ? 'मराठी' : 'English'}</Text>
               <ChevronRight size={16} color="#C2B193" strokeWidth={3} />
             </View>
           </Pressable>
 
           {/* Saved */}
           <Pressable style={styles.menuItem}>
-            <Text style={styles.menuItemText}>{isMr ? 'जतन केलेले' : 'Saved'}</Text>
+            <Text style={styles.menuItemText}>{t('vendor.savedMenu')}</Text>
             <ChevronRight size={16} color="#C2B193" strokeWidth={3} />
           </Pressable>
 
           {/* Settings */}
           <Pressable onPress={() => navigation.navigate('Settings')} style={styles.menuItem}>
-            <Text style={styles.menuItemText}>{isMr ? 'सेटिंग्ज' : 'Settings'}</Text>
+            <Text style={styles.menuItemText}>{t('vendor.settingsMenu')}</Text>
             <ChevronRight size={16} color="#C2B193" strokeWidth={3} />
           </Pressable>
 
           {/* Help & support */}
           <Pressable onPress={() => navigation.navigate('HelpSupport')} style={styles.menuItem}>
-            <Text style={styles.menuItemText}>{isMr ? 'मदत आणि सहाय्य' : 'Help & support'}</Text>
+            <Text style={styles.menuItemText}>{t('vendor.helpSupportMenu')}</Text>
             <ChevronRight size={16} color="#C2B193" strokeWidth={3} />
           </Pressable>
 
           {/* Log out */}
           <Pressable onPress={handleLogout} style={styles.logoutItem}>
-            <Text style={styles.logoutText}>{isMr ? 'लॉग आउट' : 'Log out'}</Text>
+            <Text style={styles.logoutText}>{t('vendor.logoutMenu')}</Text>
           </Pressable>
         </View>
 
       </ScrollView>
+
+      <LanguageModal
+        visible={langModalVisible}
+        onClose={() => setLangModalVisible(false)}
+        currentLanguage={preferredLanguage}
+        onSelectLanguage={(lang) => {
+          setLanguage(lang);
+          setLangModalVisible(false);
+        }}
+      />
     </SafeAreaView>
   );
 };

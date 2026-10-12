@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, Pressable } from 'react-native';
 import { Check } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../store/useAuthStore';
 import { theme } from '../../constants/theme';
 import { horizontalScale, verticalScale, moderateScale } from '../../hooks/useScale';
@@ -15,6 +16,7 @@ type NavigationProp = StackNavigationProp<RootStackParamList, 'LanguageSelect'>;
 
 export const LanguageSelectScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
+  const { t } = useTranslation();
   const { preferredLanguage, setLanguage } = useAuthStore();
   const [selectedLang, setSelectedLang] = useState<'mr' | 'en'>(preferredLanguage);
 
@@ -28,19 +30,6 @@ export const LanguageSelectScreen: React.FC = () => {
     navigation.navigate('OtpVerify', { phone: '' });
   };
 
-  const strings = {
-    mr: {
-      sectionLabel: 'भाषा निवडा · Choose language',
-      btnContinue: 'पुढे जा',
-    },
-    en: {
-      sectionLabel: 'भाषा निवडा · Choose language',
-      btnContinue: 'Continue',
-    },
-  };
-
-  const currentStrings = strings[selectedLang];
-
   return (
     <View style={styles.container}>
       {/* Top / Center Content */}
@@ -52,7 +41,7 @@ export const LanguageSelectScreen: React.FC = () => {
         </View>
 
         {/* Section Label */}
-        <Text style={styles.sectionLabel}>{currentStrings.sectionLabel}</Text>
+        <Text style={styles.sectionLabel}>{t('auth.selectLanguageTitle')}</Text>
 
         {/* Language Selection List */}
         <View style={styles.listContainer}>
@@ -65,7 +54,7 @@ export const LanguageSelectScreen: React.FC = () => {
             ]}
           >
             <Text style={[styles.langText, selectedLang === 'mr' && styles.selectedLangText]}>
-              मराठी
+              {t('auth.marathi')}
             </Text>
             {selectedLang === 'mr' ? (
               <Check size={20} color="#E58A2B" strokeWidth={3} />
@@ -83,7 +72,7 @@ export const LanguageSelectScreen: React.FC = () => {
             ]}
           >
             <Text style={[styles.langText, selectedLang === 'en' && styles.selectedLangText]}>
-              English
+              {t('auth.english')}
             </Text>
             {selectedLang === 'en' ? (
               <Check size={20} color="#E58A2B" strokeWidth={3} />
@@ -97,7 +86,7 @@ export const LanguageSelectScreen: React.FC = () => {
       {/* Footer / CTA and Page Indicators */}
       <View style={styles.footer}>
         <Button
-          title={currentStrings.btnContinue}
+          title={t('common.continue')}
           onPress={handleContinue}
           style={styles.btn}
           textStyle={styles.btnText}

@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, ActivityIndicator, Pressable } from 'react-nati
 import Svg, { Circle, Line, Path } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../store/useAuthStore';
 import { theme } from '../../constants/theme';
 import { horizontalScale, verticalScale, moderateScale } from '../../hooks/useScale';
@@ -16,6 +17,7 @@ import { Vendor } from '../../api/mockData';
 type NavigationProp = StackNavigationProp<RootStackParamList>;
 
 export const KycStatusScreen: React.FC = () => {
+  const { t } = useTranslation();
   const navigation = useNavigation<NavigationProp>();
   const { user, preferredLanguage, setUserMode, activeArea } = useAuthStore();
   
@@ -29,19 +31,15 @@ export const KycStatusScreen: React.FC = () => {
   const areaName = activeArea ? (isMr ? activeArea.name_mr : activeArea.name_en) : (isMr ? 'वांद्रे पश्चिम' : 'Bandra West');
 
   const strings = {
-    back: isMr ? 'पडताळणी' : 'Verification',
-    title: isMr ? 'पडताळणी प्रगतीपथावर' : 'Verification in progress',
-    sub: isMr 
-      ? 'आम्ही तुमच्या कागदपत्रांची तपासणी करत आहोत.\nयासाठी साधारण २४-४८ तास लागतात.' 
-      : "We're checking your documents.\nThis usually takes 24–48 hours.",
-    notifyText: isMr ? 'मंजूर झाल्यावर आम्ही तुम्हाला सूचित करू' : "We'll notify you when approved",
-    editDetails: isMr ? 'तपशील संपादित करा' : 'Edit details',
-    liveTitle: isMr ? `तुम्ही ${areaName} मध्ये लाईव्ह आहात!` : `You’re living in ${areaName}!`,
-    spotlightTitle: isMr ? 'स्पॉटलाईट पोस्ट केली!' : 'Spotlight posted',
-    spotlightSub: isMr 
-      ? 'तुमच्या परिसरातील रहिवाशांना सूचित केले गेले.' 
-      : 'Residents in your area were notified',
-    goDashboard: isMr ? 'पुढे जा' : 'Next',
+    back: t('vendor.verification'),
+    title: t('vendor.verificationInProgress'),
+    sub: t('vendor.verificationCheckingDocs'),
+    notifyText: t('vendor.notifyWhenApproved'),
+    editDetails: t('vendor.editDetails'),
+    liveTitle: t('vendor.liveInArea', { area: areaName }),
+    spotlightTitle: t('vendor.spotlightPosted'),
+    spotlightSub: t('vendor.spotlightNotified'),
+    goDashboard: t('vendor.next'),
   };
 
   const checkStatus = async () => {

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, FlatList, Pressable, TextInput, ActivityIndicator } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import { ChevronLeft, Star, MessageSquare, CornerDownRight, Send } from 'lucide-react-native';
 import { useAuthStore } from '../../store/useAuthStore';
 import { theme } from '../../constants/theme';
@@ -13,6 +14,7 @@ import { api } from '../../api/client';
 import { Vendor, Review } from '../../api/mockData';
 
 export const VendorReviewsScreen: React.FC = () => {
+  const { t } = useTranslation();
   const navigation = useNavigation<any>();
   const { user, preferredLanguage } = useAuthStore();
   
@@ -22,17 +24,17 @@ export const VendorReviewsScreen: React.FC = () => {
   const isMr = preferredLanguage === 'mr';
 
   const strings = {
-    back: isMr ? 'मागे' : 'Back',
-    title: isMr ? 'ग्राहक अभिप्राय' : 'Customer Reviews',
-    ratingAvg: isMr ? 'सरासरी रेटिंग' : 'Average Rating',
-    totalReviews: isMr ? 'एकूण अभिप्राय' : 'Total Reviews',
-    emptyTitle: isMr ? 'कोणतेही रिव्ह्यू नाहीत.' : 'No reviews received yet.',
-    replyLabel: isMr ? 'तुमचा प्रतिसाद' : 'Your Reply',
-    btnReply: isMr ? 'प्रतिसाद द्या' : 'Reply',
-    placeholderReply: isMr ? 'आपला प्रतिसाद लिहा...' : 'Type your reply...',
-    btnSend: isMr ? 'पाठवा' : 'Send',
-    loading: isMr ? 'अभिप्राय लोड होत आहेत...' : 'Loading reviews...',
-    noVendor: isMr ? 'व्यवसाय प्रोफाइल आढळले नाही.' : 'Vendor profile not found.',
+    back: t('common.back'),
+    title: t('vendor.customerReviews'),
+    ratingAvg: t('vendor.avgRating'),
+    totalReviews: t('vendor.totalReviews'),
+    emptyTitle: t('vendor.noReviewsYet'),
+    replyLabel: t('vendor.yourReply'),
+    btnReply: t('vendor.replyBtn'),
+    placeholderReply: t('vendor.typeReplyPlaceholder'),
+    btnSend: t('vendor.sendReplyBtn'),
+    loading: t('bookings.loadingDetails'),
+    noVendor: t('vendor.noVendorProfile'),
   };
 
   const loadReviews = async () => {

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, FlatList, Pressable, ActivityIndicator, Alert } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import { ChevronLeft } from 'lucide-react-native';
 import { useAuthStore } from '../../store/useAuthStore';
 import { theme } from '../../constants/theme';
@@ -13,6 +14,7 @@ import { Booking, Vendor } from '../../api/mockData';
 type TabType = 'new' | 'accepted' | 'declined';
 
 export const BookingRequestsScreen: React.FC = () => {
+  const { t } = useTranslation();
   const { user, preferredLanguage } = useAuthStore();
   const navigation = useNavigation<any>();
   
@@ -25,15 +27,15 @@ export const BookingRequestsScreen: React.FC = () => {
   const isMr = preferredLanguage === 'mr';
 
   const strings = {
-    title: isMr ? 'बुकिंग्स' : 'Bookings',
-    tabNew: isMr ? 'नवीन' : 'New',
-    tabAccepted: isMr ? 'स्वीकृत' : 'Accepted',
-    tabDeclined: isMr ? 'नाकारलेले' : 'Declined',
-    emptyTitle: isMr ? 'कोणतीही बुकिंग आढळली नाही!' : 'No bookings found!',
-    emptySub: isMr ? 'ग्राहक बुकिंग विनंत्या येथे दिसतील.' : 'Customer booking requests will appear in this tab.',
-    btnAccept: isMr ? 'स्वीकारा' : 'Accept',
-    btnDecline: isMr ? 'नाकारा' : 'Decline',
-    badgeNew: isMr ? 'नवीन' : 'New',
+    title: t('bookings.title'),
+    tabNew: t('vendor.bookingsTabNew'),
+    tabAccepted: t('vendor.bookingsTabAccepted'),
+    tabDeclined: t('vendor.bookingsTabDeclined'),
+    emptyTitle: t('vendor.noBookingsTitle'),
+    emptySub: t('vendor.noBookingsSub'),
+    btnAccept: t('vendor.btnAcceptBooking'),
+    btnDecline: t('vendor.btnDeclineBooking'),
+    badgeNew: t('vendor.badgeNew'),
   };
 
   const loadVendorData = async () => {

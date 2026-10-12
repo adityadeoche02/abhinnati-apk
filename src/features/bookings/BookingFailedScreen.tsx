@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { StyleSheet, Text, View, Pressable } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { useTranslation } from 'react-i18next';
 import { AlertCircle, ArrowRight, RefreshCw, XCircle } from 'lucide-react-native';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useBookingStore } from '../../store/useBookingStore';
@@ -16,6 +17,7 @@ import { api } from '../../api/client';
 type NavigationProp = StackNavigationProp<RootStackParamList, 'BookingFailed'>;
 
 export const BookingFailedScreen: React.FC = () => {
+  const { t } = useTranslation();
   const navigation = useNavigation<NavigationProp>();
   const { preferredLanguage, activeArea } = useAuthStore();
   const {
@@ -32,18 +34,18 @@ export const BookingFailedScreen: React.FC = () => {
   const isMr = preferredLanguage === 'mr';
 
   const strings = {
-    title: isMr ? 'पेमेंट अपूर्ण राहिले!' : 'Payment Failed!',
-    subtitle: isMr ? 'बँकेने व्यवहार नाकारला किंवा तांत्रिक त्रुटी आली.' : 'The transaction was declined by bank or a connection timed out.',
-    cardHeader: isMr ? 'व्यवहार तपशील' : 'Transaction Summary',
-    service: isMr ? 'निवडलेली सेवा:' : 'Service:',
-    vendor: isMr ? 'व्यावसायिक:' : 'Vendor:',
-    price: isMr ? 'एकूण रक्कम:' : 'Total Price:',
-    codTitle: isMr ? 'पर्यायी पर्याय: रोख पेमेंट (COD)' : 'Alternative: Cash on Delivery (COD)',
-    codDesc: isMr ? 'आपण रोख रक्कम देऊन बुकिंग करू शकता, यामुळे पेमेंट फेल होणार नाही.' : 'Book now and pay cash at the time of service delivery.',
-    btnCod: isMr ? 'रोख पेमेंटसह बुक करा' : 'Place Booking via COD',
-    btnRetry: isMr ? 'पुन्हा पेमेंट करण्याचा प्रयत्न करा' : 'Retry Online Payment',
-    btnCancel: isMr ? 'बुकिंग रद्द करा आणि मागे जा' : 'Cancel & Go Back',
-    bookingError: isMr ? 'बुकिंग करताना त्रुटी आली. कृपया पुन्हा प्रयत्न करा.' : 'Booking failed. Please try again.',
+    title: t('bookings.paymentFailedTitle'),
+    subtitle: t('bookings.paymentFailedSub'),
+    cardHeader: t('bookings.transactionSummary'),
+    service: t('bookings.serviceLabel'),
+    vendor: t('bookings.vendorLabel'),
+    price: t('bookings.priceLabel'),
+    codTitle: t('bookings.codTitle'),
+    codDesc: t('bookings.codDesc'),
+    btnCod: t('bookings.btnCod'),
+    btnRetry: t('bookings.btnRetry'),
+    btnCancel: t('bookings.btnCancelBooking'),
+    bookingError: t('bookings.bookingError'),
   };
 
   const handleRetryPayment = () => {

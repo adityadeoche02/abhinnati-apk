@@ -5,6 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { MapPin, Bell } from 'lucide-react-native';
 import Svg, { Path, Circle, Rect } from 'react-native-svg';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../store/useAuthStore';
 import { RootStackParamList } from '../../navigation/types';
 import { theme } from '../../constants/theme';
@@ -47,32 +48,28 @@ const LockIllustration: React.FC = () => (
 
 export const PermissionsScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
+  const { t } = useTranslation();
   const { preferredLanguage, setActiveArea, setDeviceGps } = useAuthStore();
   const [loading, setLoading] = useState(false);
   const [gpsLoading, setGpsLoading] = useState(false);
   const [error, setError] = useState('');
   const [detectedArea, setDetectedArea] = useState<any>(null);
   const [showPromptModal, setShowPromptModal] = useState(false);
-
   const isMr = preferredLanguage === 'mr';
 
   const strings = {
-    title: isMr ? 'परवानग्या' : 'Permissions',
-    subtitle: isMr 
-      ? 'तुमचा परिसर फीड आणि बुकिंग्ज व्यवस्थित चालण्यासाठी काही परवानग्या द्या.'
-      : 'Allow a couple of things so your area feed and bookings work properly.',
-    locTitle: isMr ? 'लोकेशन' : 'Location',
-    locDesc: isMr ? 'तुमच्या जवळील सेवा आणि परिसर शोधा' : 'Find services and areas near you',
-    notifTitle: isMr ? 'नोटिफिकेशन्स' : 'Notifications',
-    notifDesc: isMr ? 'बुकिंग अपडेट्स आणि परिसरातील अलर्ट मिळवा' : 'Booking updates and area alerts',
-    btnAllow: isMr ? 'परवानगी द्या आणि पुढे जा' : 'Allow & continue',
-    loadingLocation: isMr ? 'लोकेशन शोधत आहे...' : 'Locating your area...',
-    modalTitle: isMr ? 'चालू लोकेशन' : 'Current Location',
-    modalBody: (name: string) => isMr 
-      ? `आम्हाला आढळले की तुम्ही ${name} जवळ आहात. तुम्हाला हा परिसर समुदाय म्हणून वापरायचा आहे का?`
-      : `We detected that you are near ${name}. Would you like to use this community?`,
-    btnUseThis: (name: string) => isMr ? `${name} समुदाय वापरा` : `Use ${name} community`,
-    btnChooseAnother: isMr ? 'दुसरा समुदाय निवडा' : 'Choose another community',
+    title: t('permissions.title'),
+    subtitle: t('permissions.subtitle'),
+    locTitle: t('permissions.locationTitle'),
+    locDesc: t('permissions.locationDesc'),
+    notifTitle: t('permissions.notificationTitle'),
+    notifDesc: t('permissions.notificationDesc'),
+    btnAllow: t('permissions.btnAllow'),
+    loadingLocation: t('permissions.loadingLocation'),
+    modalTitle: t('permissions.modalTitle'),
+    modalBody: (name: string) => t('permissions.modalBody', { name }),
+    btnUseThis: (name: string) => t('permissions.btnUseThis', { name }),
+    btnChooseAnother: t('permissions.btnChooseAnother'),
   };
 
   const handleStart = async () => {
@@ -121,10 +118,7 @@ export const PermissionsScreen: React.FC = () => {
 
       if (!result.success || result.latitude === null) {
         // GPS unavailable or geocode failed
-        setError(
-          result.errorMessage ||
-            (isMr ? 'लोकेशन मिळवता आले नाही. पुन्हा प्रयत्न करा.' : 'Could not get your location. Please try again.')
-        );
+        setError(result.errorMessage || t('permissions.locationNotFound'));
         navigation.navigate('LocationSelect');
         return;
       }
@@ -132,7 +126,7 @@ export const PermissionsScreen: React.FC = () => {
       const locality =
         result.localityLabel ||
         result.address?.city ||
-        (isMr ? 'तुमचा परिसर' : 'Your Area');
+        t('location.title');
 
       const areaObj = result.matchedArea ? {
         id: result.matchedArea.id,
@@ -164,7 +158,7 @@ export const PermissionsScreen: React.FC = () => {
       setShowPromptModal(true);
     } catch (err: any) {
       console.error('[PermissionsScreen] GPS error:', err);
-      setError(isMr ? 'त्रुटी आली. पुन्हा प्रयत्न करा.' : 'Something went wrong. Please try again.');
+      setError(t('common.somethingWentWrong'));
       navigation.navigate('LocationSelect');
     } finally {
       setLoading(false);
@@ -194,11 +188,11 @@ export const PermissionsScreen: React.FC = () => {
       if (res.success) {
         await setActiveArea(detectedArea);
       } else {
-        setError(isMr ? 'लोकेशन जतन करण्यात त्रुटी आली.' : 'Failed to save location.');
+        setError(t('permissions.saveLocationError'));
       }
     } catch (err: any) {
       console.error(err);
-      setError(err?.message || (isMr ? 'त्रुटी आली. पुन्हा प्रयत्न करा.' : 'Something went wrong. Please try again.'));
+      setError(err?.message || t('common.somethingWentWrong'));
     } finally {
       setLoading(false);
       setShowPromptModal(false);

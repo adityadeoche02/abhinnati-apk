@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../store/useAuthStore';
 import { RootStackParamList } from '../../navigation/types';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -38,6 +39,7 @@ const RatingStar: React.FC<{ size?: number; color?: string; fill?: string }> = (
 );
 
 export const BookingDetailScreen: React.FC = () => {
+  const { t } = useTranslation();
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<RouteProps>();
   const { bookingId } = route.params;
@@ -86,36 +88,36 @@ export const BookingDetailScreen: React.FC = () => {
   const isMr = preferredLanguage === 'mr';
 
   const strings = {
-    service: isMr ? 'सेवा' : 'Service',
-    amount: isMr ? 'रक्कम' : 'Amount',
-    when: isMr ? 'कधी' : 'When',
-    payment: isMr ? 'पेमेंट' : 'Payment',
-    status: isMr ? 'बुकिंग स्थिती' : 'Booking Status',
-    bookingId: isMr ? 'बुकिंग आयडी' : 'Booking ID',
-    reschedule: isMr ? 'वेळ बदला' : 'Reschedule',
-    cancel: isMr ? 'बुकिंग रद्द करा' : 'Cancel booking',
-    bookAgain: isMr ? 'पुन्हा बुक करा' : 'Book again',
-    writeReview: isMr ? 'रिव्ह्यू लिहा' : 'Write a review',
-    infoText: isMr ? 'बुकिंगनंतर ५ मिनिटांपर्यंत मोफत वेळापत्रक बदला किंवा रद्द करा.' : 'Free reschedule or cancel up to 5 minutes after booking.',
-    infoTextExpired: isMr ? 'वेळापत्रक बदलण्याची किंवा रद्द करण्याची ५ मिनिटांची मुदत संपली आहे.' : 'Reschedule and cancel window of 5 minutes has expired.',
-    ratingTitle: isMr ? 'कसे होते Aai’s Bakery?' : 'How was Aai’s Bakery?',
-    ratingSubtitle: isMr ? 'रेट करण्यासाठी स्टारवर टॅप करा.' : 'Tap a star to rate and review.',
-    cancelConfirmTitle: isMr ? 'बुकिंग रद्द करायची?' : 'Cancel Booking?',
-    cancelConfirmMsg: isMr ? 'तुम्हाला खात्री आहे की तुम्हाला ही बुकिंग रद्द करायची आहे?' : 'Are you sure you want to cancel this booking?',
-    cancelYes: isMr ? 'होय, रद्द करा' : 'Yes, cancel',
-    cancelNo: isMr ? 'नाही' : 'No',
-    statusConfirmed: isMr ? 'निश्चित' : 'Confirmed',
-    statusPending: isMr ? 'प्रलंबित' : 'Pending',
-    statusCompleted: isMr ? 'पूर्ण' : 'Completed',
-    statusCancelled: isMr ? 'रद्द' : 'Cancelled',
-    statusDeclined: isMr ? 'नाकारली' : 'Declined',
+    service: t('bookings.service'),
+    amount: t('bookings.amount'),
+    when: t('bookings.when'),
+    payment: t('bookings.payment'),
+    status: t('bookings.statusTitle'),
+    bookingId: t('bookings.bookingId', { id: '' }).replace(': #', '').trim(),
+    reschedule: t('bookings.reschedule'),
+    cancel: t('bookings.cancelBooking'),
+    bookAgain: t('bookings.bookAgain'),
+    writeReview: t('bookings.writeReview'),
+    infoText: t('bookings.infoText'),
+    infoTextExpired: t('bookings.infoTextExpired'),
+    ratingTitle: t('bookings.ratingTitle', { vendor: booking?.vendorName || "Aai's Bakery" }),
+    ratingSubtitle: t('bookings.ratingSubtitle'),
+    cancelConfirmTitle: t('bookings.cancelConfirmTitle'),
+    cancelConfirmMsg: t('bookings.cancelConfirmMsg'),
+    cancelYes: t('bookings.cancelYes'),
+    cancelNo: t('bookings.cancelNo'),
+    statusConfirmed: t('bookings.statusConfirmed'),
+    statusPending: t('bookings.statusPending'),
+    statusCompleted: t('bookings.statusCompleted'),
+    statusCancelled: t('bookings.statusCancelled'),
+    statusDeclined: t('bookings.statusDeclined'),
   };
 
   const fetchBookingDetail = async () => {
     try {
       setLoading(true);
       const bookings = await api.getBookings(user?.id);
-      const match = bookings.find(b => b.id === bookingId);
+      const match = bookings.find((b: any) => b.id === bookingId);
       if (match) {
         setBooking(match);
       }

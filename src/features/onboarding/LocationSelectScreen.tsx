@@ -23,6 +23,7 @@ import { api } from '../../api/client';
 import { Area } from '../../api/mockData';
 import { RootStackParamList } from '../../navigation/types';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 
 import useAreaSearch from './hooks/useAreaSearch';
 import AreaSearchInput from './components/AreaSearchInput';
@@ -34,6 +35,7 @@ type NavigationProp = StackNavigationProp<RootStackParamList, 'LocationSelect'>;
 
 export const LocationSelectScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
+  const { t } = useTranslation();
   const { preferredLanguage, activeArea, setActiveArea, logout, isAuthenticated, deviceGps } = useAuthStore();
 
   const isMr = preferredLanguage === 'mr';
@@ -54,18 +56,16 @@ export const LocationSelectScreen: React.FC = () => {
   } = useAreaSearch(activeArea);
 
   const strings = {
-    title: isMr ? 'तुमचा परिसर निवडा' : 'Select your area',
-    profileTitle: isMr ? 'स्थान निवडा' : 'Select Location',
-    sub: isMr ? 'सर्व बुकिंग आणि फीड तुमच्या परिसराशी संबंधित असतील.' : 'All bookings and feeds are scoped to your selected area.',
-    searchPlaceholder: isMr ? 'परिसर शोधा...' : 'Search locality',
-    btnContinueOnboarding: isMr ? 'अभिजन्नात प्रवेश करा' : 'Enter Abhinnati',
-    btnSaveLocation: isMr ? 'जतन करा' : 'Save Location',
-    emptyTitle: isMr ? 'काहीही आढळले नाही' : 'No Localities Found',
-    emptySub: isMr ? 'कृपया स्पेलिंग तपासा किंवा इतर परिसराचा शोध घ्या.' : 'Please check the spelling or search for another locality.',
-    loadingLocation: isMr ? 'लोकेशन जतन करत आहे...' : 'Saving your location...',
-    toastPermission: isMr 
-      ? 'लोकेशन शोधण्यासाठी परवानगी आवश्यक आहे.' 
-      : 'Location permission is required to detect your area.',
+    title: t('location.title'),
+    profileTitle: t('location.profileTitle'),
+    sub: t('location.sub'),
+    searchPlaceholder: t('location.searchPlaceholder'),
+    btnContinueOnboarding: t('location.btnContinueOnboarding'),
+    btnSaveLocation: t('location.btnSaveLocation'),
+    emptyTitle: t('location.emptyTitle'),
+    emptySub: t('location.emptySub'),
+    loadingLocation: t('location.loadingLocation'),
+    toastPermission: t('location.toastPermission'),
   };
 
   // Toast notification fallback

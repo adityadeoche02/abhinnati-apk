@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, ScrollView, Pressable, Switch, ActivityIndicator, FlatList } from 'react-native';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { useTranslation } from 'react-i18next';
 import { Star, ShieldCheck, ClipboardList, Calendar, Users, Eye, Coffee, ChevronRight } from 'lucide-react-native';
 import { useAuthStore } from '../../store/useAuthStore';
 import { theme } from '../../constants/theme';
@@ -15,7 +16,7 @@ import { Vendor, Booking } from '../../api/mockData';
 
 type NavigationProp = StackNavigationProp<RootStackParamList>;
 
-const getTodayHoursString = (weeklyHoursJson: string | null | undefined, isMr: boolean) => {
+const getTodayHoursString = (weeklyHoursJson: string | null | undefined, closedStr: string) => {
   const weekdays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   const today = weekdays[new Date().getDay()];
   
@@ -25,7 +26,7 @@ const getTodayHoursString = (weeklyHoursJson: string | null | undefined, isMr: b
       const todayConfig = config[today];
       if (todayConfig) {
         if (todayConfig.closed) {
-          return isMr ? 'आज बंद आहे' : 'Closed Today';
+          return closedStr;
         }
         return `${todayConfig.startTime || '9:00 AM'} – ${todayConfig.endTime || '6:00 PM'}`;
       }
@@ -33,12 +34,13 @@ const getTodayHoursString = (weeklyHoursJson: string | null | undefined, isMr: b
   }
   
   if (today === 'Sunday') {
-    return isMr ? 'आज बंद आहे' : 'Closed Today';
+    return closedStr;
   }
   return '9:00 AM – 6:00 PM';
 };
 
 export const VendorDashboardScreen: React.FC = () => {
+  const { t } = useTranslation();
   const navigation = useNavigation<NavigationProp>();
   const { user, preferredLanguage, setUserMode } = useAuthStore();
 
@@ -49,20 +51,20 @@ export const VendorDashboardScreen: React.FC = () => {
   const isMr = preferredLanguage === 'mr';
 
   const strings = {
-    title: isMr ? 'माझे दुकान' : 'Vendor Dashboard',
-    btnSwitchMode: isMr ? 'ग्राहक मोड' : 'Resident Mode',
-    statPending: isMr ? 'नवीन ऑर्डर्स' : 'Pending Jobs',
-    statTotal: isMr ? 'एकूण बुकिंग्स' : 'Total Bookings',
-    statRating: isMr ? 'रेटिंग' : 'Rating',
-    vacationTitle: isMr ? 'सुट्टी मोड (Vacation Mode)' : 'Vacation Mode',
-    vacationSub: isMr ? 'सुरू असताना ग्राहक नवीन बुकिंग करू शकणार नाहीत.' : 'When active, residents cannot place new bookings.',
-    pendingAlert: isMr ? 'प्रलंबित ऑर्डर्स मंजूर करा' : 'Pending Booking Approvals',
-    pendingBtn: isMr ? 'तपासा' : 'Review',
-    scheduleHeader: isMr ? 'आजचे वेळापत्रक' : 'Today\'s Schedule',
-    emptySchedule: isMr ? 'आज कोणतीही बुकिंग नाही.' : 'No bookings scheduled for today.',
-    priceLabel: isMr ? 'शुल्क' : 'Cost',
-    loading: isMr ? 'डेटा लोड होत आहे...' : 'Loading dashboard...',
-    noVendor: isMr ? 'नोंदणीकृत व्यवसाय आढळला नाही.' : 'No vendor profile associated with this account.',
+    title: t('vendor.myShop'),
+    btnSwitchMode: t('vendor.userMode'),
+    statPending: t('vendor.pendingJobs'),
+    statTotal: t('vendor.totalBookings'),
+    statRating: t('vendor.rating'),
+    vacationTitle: t('vendor.vacationModeTitle'),
+    vacationSub: t('vendor.vacationModeSub'),
+    pendingAlert: t('vendor.pendingApprovals'),
+    pendingBtn: t('vendor.review'),
+    scheduleHeader: t('vendor.todaySchedule'),
+    emptySchedule: t('vendor.noBookingsToday'),
+    priceLabel: t('vendor.cost'),
+    loading: t('vendor.loadingDashboard'),
+    noVendor: t('vendor.noVendorProfile'),
   };
 
   const loadDashboardData = async () => {
@@ -127,14 +129,14 @@ export const VendorDashboardScreen: React.FC = () => {
           <View style={styles.verifiedRow}>
             <View style={styles.verifiedDot} />
             <Text style={styles.verifiedText}>
-              {isMr ? `वांद्रे पश्चिम मध्ये सक्रिय · पडताळणीकृत` : `Live in ${areaName} · Verified`}
+              {t('vendor.liveInAreaVerified', { area: isMr ? 'वांद्रे पश्चिम' : areaName })}
             </Text>
           </View>
         </View>
         
         <Pressable onPress={handleSwitchToResident} style={styles.switchBtn}>
           <Users size={12} color="#6B5F4E" />
-          <Text style={styles.switchBtnText}>{isMr ? 'ग्राहक मोड' : 'User mode'}</Text>
+          <Text style={styles.switchBtnText}>{t('vendor.userMode')}</Text>
         </Pressable>
       </View>
 
@@ -146,7 +148,7 @@ export const VendorDashboardScreen: React.FC = () => {
             <View style={styles.alertLeft}>
               <View style={styles.alertBulletIcon} />
               <Text style={styles.alertText}>
-                {isMr ? `${pendingCount} नवीन बुकिंग विनंत्या` : `${pendingCount} new booking requests`}
+                {t('vendor.newBookingRequestsCount', { count: pendingCount })}
               </Text>
             </View>
             <Pressable
@@ -158,19 +160,19 @@ export const VendorDashboardScreen: React.FC = () => {
               }}
               style={styles.alertBtn}
             >
-              <Text style={styles.alertBtnText}>{isMr ? 'तपासा' : 'Review'}</Text>
+              <Text style={styles.alertBtnText}>{t('vendor.review')}</Text>
               <ChevronRight size={14} color="#9A5A12" />
             </Pressable>
           </Card>
         )}
 
         {/* Today's Schedule */}
-        <Text style={styles.sectionTitle}>{isMr ? 'आज' : 'Today'}</Text>
+        <Text style={styles.sectionTitle}>{t('vendor.today')}</Text>
         
         {todayBookings.length === 0 ? (
           <Card style={styles.emptyCard}>
             <Coffee size={20} color="#8A7C66" style={{ marginRight: 10 }} />
-            <Text style={styles.emptyText}>{isMr ? 'आज कोणतीही बुकिंग नाही.' : 'No bookings scheduled for today.'}</Text>
+            <Text style={styles.emptyText}>{t('vendor.noBookingsToday')}</Text>
           </Card>
         ) : (
           (() => {
@@ -194,21 +196,21 @@ export const VendorDashboardScreen: React.FC = () => {
         <View style={styles.statsGrid}>
           <Card style={styles.statCard}>
             <Text style={styles.statVal}>128</Text>
-            <Text style={styles.statLabel}>{isMr ? 'व्ह्यूज' : 'Views'}</Text>
+            <Text style={styles.statLabel}>{t('vendor.views')}</Text>
           </Card>
 
           <Card style={styles.statCard}>
             <Text style={styles.statVal}>{totalCount}</Text>
-            <Text style={styles.statLabel}>{isMr ? 'बुकिंग्स' : 'Bookings'}</Text>
+            <Text style={styles.statLabel}>{t('vendor.totalBookings')}</Text>
           </Card>
 
           <Pressable onPress={() => navigation.navigate('VendorReviews')} style={{ flex: 1 }}>
             <Card style={styles.statCard}>
               <View style={styles.ratingRow}>
-                <Text style={styles.statVal}>{vendor.ratingAvg > 0 ? vendor.ratingAvg : 'नवीन'}</Text>
+                <Text style={styles.statVal}>{vendor.ratingAvg > 0 ? vendor.ratingAvg : t('marketplace.newTag')}</Text>
                 {vendor.ratingAvg > 0 && <Star size={16} color={theme.colors.marigold} fill={theme.colors.marigold} />}
               </View>
-              <Text style={styles.statLabel}>{isMr ? 'रेटिंग' : 'Rating'}</Text>
+              <Text style={styles.statLabel}>{t('vendor.rating')}</Text>
             </Card>
           </Pressable>
         </View>
@@ -217,34 +219,34 @@ export const VendorDashboardScreen: React.FC = () => {
         <Card style={styles.availabilityCard}>
           <View style={styles.availabilityRow}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.availabilityTitle}>Availability</Text>
+              <Text style={styles.availabilityTitle}>{t('vendor.availabilityTitle')}</Text>
               {vendor.vacationMode ? (
                 <View style={{ marginTop: 8 }}>
-                  <Text style={styles.availabilityStatusRed}>🔴 Currently Unavailable</Text>
-                  <Text style={styles.availabilitySubText}>Vacation Mode Enabled</Text>
+                  <Text style={styles.availabilityStatusRed}>{t('vendor.currentlyUnavailable')}</Text>
+                  <Text style={styles.availabilitySubText}>{t('vendor.vacationModeTitle')}</Text>
                   {vendor.vacationEnd ? (
                     <Text style={styles.availabilitySubText}>
-                      Available again on: {new Date(vendor.vacationEnd).toLocaleDateString(isMr ? 'mr-IN' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' })}
+                      {t('vendor.availableAgainOn', { date: new Date(vendor.vacationEnd).toLocaleDateString(isMr ? 'mr-IN' : 'en-US', { day: 'numeric', month: 'long', year: 'numeric' }) })}
                     </Text>
                   ) : null}
                 </View>
               ) : (
                 <View style={{ marginTop: 8 }}>
-                  <Text style={styles.availabilityStatusGreen}>🟢 Available Today</Text>
+                  <Text style={styles.availabilityStatusGreen}>{t('vendor.availableToday')}</Text>
                   <Text style={styles.availabilityTimeText}>
-                    {getTodayHoursString(vendor.weeklyHours, isMr)}
+                    {getTodayHoursString(vendor.weeklyHours, t('vendor.closedToday'))}
                   </Text>
                 </View>
               )}
             </View>
             <Pressable onPress={() => navigation.navigate('ManageAvailability')} style={styles.availabilityEditBtn}>
-              <Text style={styles.availabilityEditText}>{isMr ? 'सुधारा →' : 'Edit →'}</Text>
+              <Text style={styles.availabilityEditText}>{t('vendor.editArrow')}</Text>
             </Pressable>
           </View>
         </Card>
 
         {/* Quick Actions */}
-        <Text style={styles.sectionTitle}>{isMr ? 'जलद कृती' : 'Quick actions'}</Text>
+        <Text style={styles.sectionTitle}>{t('vendor.quickActions')}</Text>
         <View style={styles.quickActionsGrid}>
           {/* Row 1 */}
           <View style={styles.quickActionsRow}>
@@ -257,7 +259,7 @@ export const VendorDashboardScreen: React.FC = () => {
                 <View style={styles.menuIconBar} />
                 <View style={styles.menuIconBar} />
               </View>
-              <Text style={styles.quickActionText}>{isMr ? 'सेवा व्यवस्थापन' : 'Manage services'}</Text>
+              <Text style={styles.quickActionText}>{t('vendor.manageServicesAction')}</Text>
             </Pressable>
 
             <Pressable 
@@ -267,7 +269,7 @@ export const VendorDashboardScreen: React.FC = () => {
               <View style={styles.quickActionIconContainer}>
                 <View style={styles.pencilIconBody} />
               </View>
-              <Text style={styles.quickActionText}>{isMr ? 'व्यवसाय संपादन' : 'Edit business'}</Text>
+              <Text style={styles.quickActionText}>{t('vendor.editBusinessAction')}</Text>
             </Pressable>
           </View>
 
@@ -282,7 +284,7 @@ export const VendorDashboardScreen: React.FC = () => {
               <View style={styles.quickActionIconContainer}>
                 <View style={styles.linkIconSquare} />
               </View>
-              <Text style={styles.quickActionText}>{isMr ? 'प्रोफाइल पहा' : 'View listing'}</Text>
+              <Text style={styles.quickActionText}>{t('vendor.viewListingAction')}</Text>
             </Pressable>
 
             <Pressable 
@@ -294,7 +296,7 @@ export const VendorDashboardScreen: React.FC = () => {
                 <Text style={{ fontSize: 14, color: '#B6A98F' }}>✦</Text>
               </View>
               <Text style={[styles.quickActionText, { color: '#A89A82' }]}>
-                {isMr ? 'जाहिरात · P2' : 'Promote · P2'}
+                {t('vendor.promoteAction')}
               </Text>
             </Pressable>
           </View>

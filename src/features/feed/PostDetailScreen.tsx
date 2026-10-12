@@ -21,13 +21,15 @@ import { Post, Comment } from '../../api/mockData';
 import { likeSyncService } from '../../services/likeSyncService';
 import { theme } from '../../constants/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 
 type RouteProps = RouteProp<any, 'PostDetail'>;
 
 export const PostDetailScreen: React.FC = () => {
   const navigation = useNavigation();
   const route = useRoute<RouteProps>();
-  const { postId } = route.params;
+  const { t } = useTranslation();
+  const { postId } = (route.params as any) || {};
   const { user, preferredLanguage, activeArea } = useAuthStore();
 
   const [post, setPost] = useState<Post | null>(null);
@@ -44,10 +46,10 @@ export const PostDetailScreen: React.FC = () => {
   const localityName = isMr ? activeArea?.name_mr : activeArea?.name_en;
 
   const strings = {
-    backText: isMr ? 'पोस्ट' : 'Post',
-    inputPlaceholder: isMr ? 'प्रतिक्रिया जोडा...' : 'Add a comment...',
-    noComments: isMr ? 'अजून कोणतीही प्रतिक्रिया नाही.' : 'No comments yet.',
-    reply: isMr ? 'उत्तर द्या' : 'Reply',
+    backText: t('feed.backText'),
+    inputPlaceholder: t('feed.addCommentPlaceholder'),
+    noComments: t('feed.noCommentsYet'),
+    reply: t('feed.reply'),
   };
 
   const loadThreadData = async () => {
@@ -286,21 +288,21 @@ export const PostDetailScreen: React.FC = () => {
                         fill={hasLiked ? '#DA2525' : 'transparent'} 
                       />
                       <Text style={styles.statText}>
-                        {`${post.likes} ${isMr ? 'लाईक्स' : 'likes'}`}
+                        {t('feed.likesCount', { count: post.likes })}
                       </Text>
                     </Pressable>
 
                     <View style={styles.statButton}>
                       <MessageCircle size={18} color="#2A2520" />
                       <Text style={styles.statText}>
-                        {`${post.commentsCount} ${isMr ? 'प्रतिक्रिया' : 'comments'}`}
+                        {t('feed.commentsCount', { count: post.commentsCount })}
                       </Text>
                     </View>
 
                     <Pressable style={styles.statButton} onPress={handleShare}>
                       <Share2 size={18} color="#2A2520" />
                       <Text style={styles.statText}>
-                        {isMr ? 'शेअर' : 'Share'}
+                        {t('feed.sharePost')}
                       </Text>
                     </Pressable>
                   </View>

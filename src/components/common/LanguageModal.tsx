@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, Pressable, Modal, Dimensions } from 'react-nati
 import Svg, { Path } from 'react-native-svg';
 import { theme } from '../../constants/theme';
 import { horizontalScale, verticalScale, moderateScale } from '../../hooks/useScale';
+import { useTranslation } from 'react-i18next';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -27,14 +28,15 @@ export const LanguageModal: React.FC<LanguageModalProps> = ({
   currentLanguage,
   onSelectLanguage,
 }) => {
+  const { t } = useTranslation();
   const [selectedLang, setSelectedLang] = useState<'mr' | 'en'>(currentLanguage);
 
   const isMr = currentLanguage === 'mr';
   const strings = {
-    title: isMr ? 'भाषा निवडा' : 'Choose language',
+    title: t('auth.selectLanguageTitle'),
     subtitle: isMr ? 'संपूर्ण ॲपवर लागू होते.' : 'Applies across the whole app.',
     tipText: isMr ? 'तुम्ही सेटिंग्जमध्ये हे कधीही बदलू शकता.' : 'You can change this anytime in Settings.',
-    doneBtn: isMr ? 'पूर्ण झाले' : 'Done',
+    doneBtn: t('common.done'),
   };
   
   // Shared values for Reanimated animations

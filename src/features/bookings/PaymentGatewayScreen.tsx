@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { StyleSheet, Text, View, ActivityIndicator, Pressable } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { useTranslation } from 'react-i18next';
 import { ShieldCheck } from 'lucide-react-native';
 import { CustomChevronLeft } from '../../components/common/Icons';
 import { useAuthStore } from '../../store/useAuthStore';
@@ -13,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 type NavigationProp = StackNavigationProp<RootStackParamList, 'PaymentGateway'>;
 
 export const PaymentGatewayScreen: React.FC = () => {
+  const { t } = useTranslation();
   const navigation = useNavigation<NavigationProp>();
   const { user, preferredLanguage } = useAuthStore();
   const {
@@ -30,14 +32,14 @@ export const PaymentGatewayScreen: React.FC = () => {
 
   const isMr = preferredLanguage === 'mr';
   const strings = {
-    header: isMr ? 'पेमेंट' : 'Payment',
-    payUsing: isMr ? 'याद्वारे पैसे द्या' : 'Pay using',
-    upi: 'UPI',
-    card: isMr ? 'क्रेडिट / डेबिट कार्ड' : 'Credit / Debit card',
-    wallet: isMr ? 'वॉलेट' : 'Wallet',
-    totalLabel: isMr ? 'एकूण' : 'Total',
-    btnPay: isMr ? 'पेमेंट करा' : 'Pay',
-    processingText: isMr ? 'पेमेंट सुरक्षितपणे प्रक्रियेत आहे...' : 'Processing your secure payment...',
+    header: t('bookings.paymentHeader'),
+    payUsing: t('bookings.payUsing'),
+    upi: t('bookings.paymentUpi'),
+    card: t('bookings.paymentCard'),
+    wallet: t('bookings.paymentWallet'),
+    totalLabel: t('bookings.totalLabel'),
+    btnPay: t('bookings.btnPay'),
+    processingText: t('bookings.processingPayment'),
   };
 
   const handlePayment = async () => {
@@ -56,7 +58,7 @@ export const PaymentGatewayScreen: React.FC = () => {
     try {
       const newBooking = await api.createBooking({
         userId: user?.id || 'guest-user',
-        userName: user?.name || 'अनामिक रहिवासी',
+        userName: user?.name || t('bookings.anonymousUser'),
         userPhone: user?.phone || '+910000000000',
         vendorId: finalVendorId,
         vendorName: finalVendorName,

@@ -12,12 +12,14 @@ import Button from '../../components/common/Button';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { api } from '../../api/client';
 import { Booking } from '../../api/mockData';
+import { useTranslation } from 'react-i18next';
 
 type NavigationProp = StackNavigationProp<RootStackParamList>;
 type TabType = 'upcoming' | 'past';
 
 export const BookingsListScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
+  const { t } = useTranslation();
   const { preferredLanguage, user } = useAuthStore();
   const [activeTab, setActiveTab] = useState<TabType>('upcoming');
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -26,17 +28,17 @@ export const BookingsListScreen: React.FC = () => {
   const isMr = preferredLanguage === 'mr';
 
   const strings = {
-    title: isMr ? 'बुकिंग्स' : 'Bookings',
-    tabUpcoming: isMr ? 'नवीन' : 'Upcoming',
-    tabPast: isMr ? 'मागील' : 'Past',
-    emptyTitle: isMr ? 'कोणतीही बुकिंग नाही!' : 'No bookings found!',
-    emptySub: isMr ? 'आपल्या परिसरातील सेवा बुक करा.' : 'Book verified local service providers in your neighborhood.',
-    btnExplore: isMr ? 'सेवा शोधा' : 'Explore Services',
-    statusPending: isMr ? 'प्रलंबित' : 'Pending',
-    statusConfirmed: isMr ? 'निश्चित' : 'Confirmed',
-    statusCompleted: isMr ? 'पूर्ण' : 'Completed',
-    statusCancelled: isMr ? 'रद्द' : 'Cancelled',
-    statusDeclined: isMr ? 'नाकारली' : 'Declined',
+    title: t('bookings.title'),
+    tabUpcoming: t('bookings.tabUpcoming'),
+    tabPast: t('bookings.tabPast'),
+    emptyTitle: t('bookings.emptyBookingsTitle'),
+    emptySub: t('bookings.emptyBookingsSub'),
+    btnExplore: t('bookings.btnExplore'),
+    statusPending: t('bookings.statusPending'),
+    statusConfirmed: t('bookings.statusConfirmed'),
+    statusCompleted: t('bookings.statusCompleted'),
+    statusCancelled: t('bookings.statusCancelled'),
+    statusDeclined: t('bookings.statusDeclined'),
   };
 
   const fetchBookings = async () => {

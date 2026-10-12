@@ -4,6 +4,7 @@ import Animated, { useAnimatedStyle, withTiming } from 'react-native-reanimated'
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { Plus, Camera, Image as ImageIcon, Trash2 } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../store/useAuthStore';
 import { RootStackParamList } from '../../navigation/types';
 import { api } from '../../api/client';
@@ -12,6 +13,7 @@ type NavigationProp = StackNavigationProp<RootStackParamList, 'NameSelect'>;
 
 export const NameSelectScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
+  const { t } = useTranslation();
   const { user, login, preferredLanguage, logout } = useAuthStore();
   const isMr = preferredLanguage === 'mr';
   const [name, setName] = useState('');
@@ -31,10 +33,10 @@ export const NameSelectScreen: React.FC = () => {
   const nameInputRef = useRef<TextInput>(null);
 
   const strings = {
-    title: isMr ? 'तुमचे नाव काय आहे?' : 'What should we call you?',
-    label: isMr ? 'तुमचे नाव' : 'Your name',
-    placeholder: isMr ? 'स्नेहा पाटील' : 'Sneha Patil',
-    btnContinue: isMr ? 'पुढे जा' : 'Continue',
+    title: t('auth.nameTitle'),
+    label: t('auth.nameLabel'),
+    placeholder: t('auth.namePlaceholder'),
+    btnContinue: t('common.continue'),
   };
 
   const handleContinue = async () => {
@@ -51,10 +53,10 @@ export const NameSelectScreen: React.FC = () => {
         }
         navigation.navigate('Permissions');
       } else {
-        setError(isMr ? 'नाव जतन करण्यात त्रुटी आली.' : 'Failed to save name. Please try again.');
+        setError(t('auth.saveNameError'));
       }
     } catch (err: any) {
-      setError(err?.message || (isMr ? 'काहीतरी चुकीचे घडले.' : 'Something went wrong.'));
+      setError(err?.message || t('common.somethingWentWrong'));
     } finally {
       setLoading(false);
     }
@@ -69,9 +71,7 @@ export const NameSelectScreen: React.FC = () => {
   };
 
   const previewName = getNamePreview(name);
-  const noteText = isMr
-    ? `तुमच्या पोस्ट्स आणि रिव्ह्यूवर "${previewName}" असे दिसेल.`
-    : `Shown as "${previewName}" on your posts and reviews.`;
+  const noteText = t('auth.namePreviewNote', { name: previewName });
 
   const animatedButtonStyle = useAnimatedStyle(() => ({
     opacity: withTiming(name.trim().length > 0 && !loading ? 1.0 : 0.5, { duration: 250 }),
@@ -143,7 +143,6 @@ export const NameSelectScreen: React.FC = () => {
         onGalleryPress={async () => { setIsPhotoSheetVisible(false); setLoading(true); await new Promise(r => setTimeout(r, 800)); setProfileImage('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&q=80'); setLoading(false); }}
         onRemovePress={() => { setIsPhotoSheetVisible(false); setProfileImage(null); }}
         hasPhoto={!!profileImage}
-        isMr={isMr}
       />
     </View>
   );
@@ -182,9 +181,24 @@ const styles = StyleSheet.create({
   sheetOptionText: { fontFamily: 'Mukta-Regular', fontSize: 13, lineHeight: 18, color: '#6B5F4E' },
 });
 
-interface PhotoUploadBottomSheetProps { visible: boolean; onClose: () => void; onCameraPress: () => void; onGalleryPress: () => void; onRemovePress: () => void; hasPhoto: boolean; isMr: boolean; }
+interface PhotoUploadBottomSheetProps {
+  visible: boolean;
+  onClose: () => void;
+  onCameraPress: () => void;
+  onGalleryPress: () => void;
+  onRemovePress: () => void;
+  hasPhoto: boolean;
+}
 
-const PhotoUploadBottomSheet: React.FC<PhotoUploadBottomSheetProps> = ({ visible, onClose, onCameraPress, onGalleryPress, onRemovePress, hasPhoto, isMr }) => {
+const PhotoUploadBottomSheet: React.FC<PhotoUploadBottomSheetProps> = ({
+  visible,
+  onClose,
+  onCameraPress,
+  onGalleryPress,
+  onRemovePress,
+  hasPhoto,
+}) => {
+  const { t } = useTranslation();
   if (!visible) return null;
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -193,20 +207,26 @@ const PhotoUploadBottomSheet: React.FC<PhotoUploadBottomSheetProps> = ({ visible
           <TouchableWithoutFeedback>
             <View style={styles.sheetContainer}>
               <View style={styles.sheetDragHandle} />
-              <Text style={styles.sheetTitle}>{isMr ? 'प्रोफाईल फोटो' : 'Profile photo'}</Text>
+              <Text style={styles.sheetTitle}>{t('profile.title')}</Text>
               <View style={styles.sheetRow}>
                 <View style={styles.sheetOption}>
-                  <Pressable onPress={onCameraPress} style={[styles.sheetIconCircle, { backgroundColor: '#E8F5E9' }]}><Camera size={24} color="#2E7D52" /></Pressable>
-                  <Text style={styles.sheetOptionText}>{isMr ? 'कॅमेरा' : 'Camera'}</Text>
+                  <Pressable onPress={onCameraPress} style={[styles.sheetIconCircle, { backgroundColor: '#E8F5E9' }]}>
+                    <Camera size={24} color="#2E7D52" />
+                  </Pressable>
+                  <Text style={styles.sheetOptionText}>{t('auth.takePhoto')}</Text>
                 </View>
                 <View style={styles.sheetOption}>
-                  <Pressable onPress={onGalleryPress} style={[styles.sheetIconCircle, { backgroundColor: '#E3F2FD' }]}><ImageIcon size={24} color="#1565C0" /></Pressable>
-                  <Text style={styles.sheetOptionText}>{isMr ? 'गॅलरी' : 'Gallery'}</Text>
+                  <Pressable onPress={onGalleryPress} style={[styles.sheetIconCircle, { backgroundColor: '#E3F2FD' }]}>
+                    <ImageIcon size={24} color="#1565C0" />
+                  </Pressable>
+                  <Text style={styles.sheetOptionText}>{t('auth.chooseFromGallery')}</Text>
                 </View>
                 {hasPhoto && (
                   <View style={styles.sheetOption}>
-                    <Pressable onPress={onRemovePress} style={[styles.sheetIconCircle, { backgroundColor: '#FFEBEE' }]}><Trash2 size={24} color="#C62828" /></Pressable>
-                    <Text style={styles.sheetOptionText}>{isMr ? 'काढून टाका' : 'Remove'}</Text>
+                    <Pressable onPress={onRemovePress} style={[styles.sheetIconCircle, { backgroundColor: '#FFEBEE' }]}>
+                      <Trash2 size={24} color="#C62828" />
+                    </Pressable>
+                    <Text style={styles.sheetOptionText}>{t('auth.removePhoto')}</Text>
                   </View>
                 )}
               </View>

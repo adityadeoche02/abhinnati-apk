@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Menu } from 'lucide-react-native';
 import { CustomHomeIcon, CustomCalendarIcon, CustomProfileIcon } from '../components/common/Icons';
 import { VendorTabParamList } from './types';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../store/useAuthStore';
 
 // Import screens
@@ -17,8 +18,8 @@ import VendorProfileScreen from '../features/vendor/VendorProfileScreen';
 const Tab = createBottomTabNavigator<VendorTabParamList>();
 
 const CustomVendorTabBar: React.FC<any> = ({ state, descriptors, navigation }) => {
+  const { t } = useTranslation();
   const { preferredLanguage } = useAuthStore();
-  const isMr = preferredLanguage === 'mr';
   const insets = useSafeAreaInsets();
 
   const getIcon = (routeName: string, isFocused: boolean) => {
@@ -44,13 +45,13 @@ const CustomVendorTabBar: React.FC<any> = ({ state, descriptors, navigation }) =
   const getLabel = (routeName: string) => {
     switch (routeName) {
       case 'VendorDashboard':
-        return isMr ? 'होम' : 'Home';
+        return t('tabs.vendorDashboard');
       case 'VendorBookings':
-        return isMr ? 'बुकिंग्स' : 'Bookings';
+        return t('tabs.vendorBookings');
       case 'ManageServices':
-        return isMr ? 'सेवा' : 'Services';
+        return t('tabs.vendorServices');
       case 'VendorProfile':
-        return isMr ? 'प्रोफाईल' : 'Profile';
+        return t('tabs.vendorProfile');
       default:
         return '';
     }

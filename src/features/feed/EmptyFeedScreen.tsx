@@ -17,11 +17,13 @@ import { theme } from '../../theme';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import locationService from '../onboarding/services/LocationService';
+import { useTranslation } from 'react-i18next';
 
 type NavigationProp = StackNavigationProp<RootStackParamList, 'EmptyFeed'>;
 
 export const EmptyFeedScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
+  const { t } = useTranslation();
   const { preferredLanguage, activeArea, setIsNewUser, deviceGps } = useAuthStore();
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(true);
@@ -107,19 +109,13 @@ export const EmptyFeedScreen: React.FC = () => {
   const displayLocality = localityName || (isMr ? 'वांद्रे पश्चिम' : 'Bandra west');
 
   const strings = {
-    title: isMr
-      ? `${displayLocality} मध्ये नुकतीच सुरुवात झाली आहे`
-      : `${displayLocality} is just getting started`,
+    title: t('feed.areaJustStarted', { area: displayLocality }),
     subtitle: vendors.length === 0
-      ? (isMr
-          ? 'तुमच्या परिसरातील स्थानिक व्यवसायांना शोधणारे आणि त्यांना पाठिंबा देणारे पहिले व्हा.'
-          : 'Be among the first to discover and support local businesses in your area.')
-      : (isMr
-          ? 'तुमच्या परिसरातील पहिली पोस्ट लिहिणारे व्हा आणि संवाद सुरू करा.'
-          : 'Be the first to share something, or discover new businesses opening near you.'),
-    btnPost: isMr ? 'पोस्ट' : 'Post',
-    btnNearby: isMr ? 'जवळचे परिसर' : 'Nearby areas',
-    sectionTitle: isMr ? 'तुमच्या जवळील नवीन व्यवसाय' : 'New businesses near you',
+      ? t('feed.supportLocalBusinesses')
+      : t('feed.beTheFirstToShare'),
+    btnPost: t('feed.postBtn'),
+    btnNearby: t('feed.exploreNearby'),
+    sectionTitle: t('feed.newBusinessesNearYou'),
   };
 
   const loadData = async (isRefreshing = false) => {
@@ -290,7 +286,7 @@ export const EmptyFeedScreen: React.FC = () => {
       {isOffline && (
         <View style={styles.offlineBanner}>
           <Text style={styles.offlineBannerText}>
-            {isMr ? 'नुकतेच लोड केलेले व्यवसाय दाखवत आहे.' : 'Showing recently loaded businesses.'}
+            {t('feed.recentBusinessesBanner')}
           </Text>
         </View>
       )}
@@ -334,7 +330,7 @@ export const EmptyFeedScreen: React.FC = () => {
               minimumFontScale={0.7}
               style={[styles.postButtonText, isMr && { fontSize: 13 }]}
             >
-              {isMr ? 'जवळपासचे शोधा (५ किमी)' : 'Explore Nearby (5 km)'}
+              {t('feed.exploreNearby')}
             </Text>
           </Pressable>
 
@@ -351,7 +347,7 @@ export const EmptyFeedScreen: React.FC = () => {
               minimumFontScale={0.7}
               style={[styles.nearbyButtonText, isMr && { fontSize: 13 }]}
             >
-              {isMr ? 'पहिली पोस्ट तयार करा' : 'Create First Post'}
+              {t('feed.createFirstPost')}
             </Text>
           </Pressable>
         </View>

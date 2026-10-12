@@ -3,6 +3,7 @@ import { StyleSheet, Text, View, Pressable, TextInput, Platform, ActivityIndicat
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { ChevronLeft } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../store/useAuthStore';
 import { api, USE_MOCK_API } from '../../api/client';
 import { RootStackParamList } from '../../navigation/types';
@@ -13,6 +14,7 @@ type RouteProps = RouteProp<RootStackParamList, 'OtpVerify'>;
 export const OtpVerifyScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<RouteProps>();
+  const { t } = useTranslation();
   const { preferredLanguage, login } = useAuthStore();
 
   const [step, setStep] = useState<'phone' | 'otp'>('phone');
@@ -39,23 +41,19 @@ export const OtpVerifyScreen: React.FC = () => {
   }, []);
 
   const strings = {
-    phoneTitle: isMr ? 'मोबाईल नंबर प्रविष्ट करा' : 'Enter your mobile number',
-    phoneSub: isMr ? 'पडताळणी करण्यासाठी आम्ही SMS द्वारे एक कोड पाठवू.' : 'We’ll send a code by SMS to verify it’s you.',
-    phonePlaceholder: '9876 543 210',
-    smsRates: isMr ? 'प्रमाणित SMS दर लागू होऊ शकतात.' : 'Standard SMS rates may apply.',
-    otpTitle: isMr ? 'नंबर पडताळणी' : 'Verify your number',
-    otpSub: isMr
-      ? `पाठवलेला ${otpLength}-अंकी कोड प्रविष्ट करा `
-      : `Enter the ${otpLength}-digit code sent to `,
-    btnSend: isMr ? 'पुढे जा' : 'Continue',
-    btnVerify: isMr ? 'Verify' : 'Verify',
-    invalidPhone: isMr ? 'कृपया वैध १०-अंकी नंबर प्रविष्ट करा.' : 'Please enter a valid 10-digit number.',
-    invalidOtp: isMr
-      ? `कृपया वैध ${otpLength}-अंकी ओटीपी प्रविष्ट करा.`
-      : `Please enter a valid ${otpLength}-digit OTP.`,
-    apiError: isMr ? 'त्रुटी आली. पुन्हा प्रयत्न करा.' : 'Something went wrong. Please try again.',
-    resendPrefix: isMr ? 'कोड पुन्हा पाठवा ' : 'Resend code in ',
-    resendAction: isMr ? 'कोड पुन्हा पाठवा' : 'Resend code',
+    phoneTitle: t('auth.enterPhoneTitle'),
+    phoneSub: t('auth.enterPhoneSub'),
+    phonePlaceholder: t('auth.phonePlaceholder'),
+    smsRates: t('auth.smsRatesNotice'),
+    otpTitle: t('auth.verifyNumberTitle'),
+    otpSub: t('auth.verifyNumberSub', { count: otpLength }),
+    btnSend: t('common.continue'),
+    btnVerify: t('auth.verifyBtn'),
+    invalidPhone: t('auth.invalidPhone'),
+    invalidOtp: t('auth.invalidOtp', { count: otpLength }),
+    apiError: t('common.somethingWentWrong'),
+    resendPrefix: t('auth.resendCode') + ' ',
+    resendAction: t('auth.resendCode'),
   };
 
   const getMaskedPhone = (phone: string) => {

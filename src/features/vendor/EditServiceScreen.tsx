@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, Text, View, ScrollView, Pressable, ActivityIndicator, Alert } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { useTranslation } from 'react-i18next';
 import { ChevronLeft } from 'lucide-react-native';
 import { useAuthStore } from '../../store/useAuthStore';
 import { theme } from '../../constants/theme';
@@ -17,6 +18,7 @@ type NavigationProp = StackNavigationProp<RootStackParamList, 'EditService'>;
 type RouteProps = RouteProp<RootStackParamList, 'EditService'>;
 
 export const EditServiceScreen: React.FC = () => {
+  const { t } = useTranslation();
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<RouteProps>();
   const { serviceId } = route.params || {};
@@ -37,19 +39,19 @@ export const EditServiceScreen: React.FC = () => {
   const isMr = preferredLanguage === 'mr';
 
   const strings = {
-    back: isMr ? 'मागे' : 'Back',
-    editTitle: isMr ? 'सेवा संपादित करा' : 'Edit Service',
-    addTitle: isMr ? 'नवीन सेवा जोडा' : 'Add New Service',
-    nameMrLabel: isMr ? 'सेवेचे नाव (मराठी)' : 'Service Name (Marathi)',
-    nameEnLabel: isMr ? 'सेवेचे नाव (English)' : 'Service Name (English)',
-    priceLabel: isMr ? 'शुल्क (₹)' : 'Price (₹)',
-    durationLabel: isMr ? 'कालावधी (मिनिटे)' : 'Duration (minutes)',
-    descMrLabel: isMr ? 'सेवेचे वर्णन (मराठी)' : 'Description (Marathi)',
-    descEnLabel: isMr ? 'सेवेचे वर्णन (English)' : 'Description (English)',
-    btnSave: isMr ? 'जतन करा' : 'Save Service',
-    fillAll: isMr ? 'सर्व आवश्यक माहिती भरा.' : 'Please fill all mandatory fields.',
-    loading: isMr ? 'माहिती लोड होत आहे...' : 'Loading service profile...',
-    noVendor: isMr ? 'व्यवसाय प्रोफाइल आढळले नाही.' : 'Vendor profile not found.',
+    back: t('common.back'),
+    editTitle: t('vendor.editServiceTitle'),
+    addTitle: t('vendor.addServiceTitle'),
+    nameMrLabel: t('vendor.serviceNameMr'),
+    nameEnLabel: t('vendor.serviceNameEn'),
+    priceLabel: t('vendor.priceRs'),
+    durationLabel: t('vendor.durationMins'),
+    descMrLabel: t('vendor.descMr'),
+    descEnLabel: t('vendor.descEn'),
+    btnSave: t('vendor.saveServiceBtn'),
+    fillAll: t('vendor.fillAllFields'),
+    loading: t('bookings.loadingDetails'),
+    noVendor: t('vendor.noVendorProfile'),
   };
 
   useEffect(() => {
@@ -61,7 +63,7 @@ export const EditServiceScreen: React.FC = () => {
         if (v) {
           setVendor(v);
           if (serviceId) {
-            const match = v.services.find(s => s.id === serviceId);
+            const match = v.services.find((s: any) => s.id === serviceId);
             if (match) {
               setServiceNameMr(match.name_mr);
               setServiceNameEn(match.name_en);
