@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '../../../../../lib/prisma';
 import { AuthMiddleware } from '../../../../../src/presentation/middleware/auth.middleware';
+import { CloudinaryService } from '../../../../../lib/cloudinary';
 
 export async function POST(req: Request) {
   try {
@@ -9,7 +10,12 @@ export async function POST(req: Request) {
     
     // The frontend sends fullName and profileImage
     const name = body.fullName || body.name || '';
-    const profileImage = body.profileImage || null;
+    let profileImage = body.profileImage || null;
+
+    if (profileImage && (profileImage.startsWith('data:') || !profileImage.startsWith('http'))) {
+      const uploadRes = await CloudinaryService.uploadProfilePhoto(profileImage, userPayload.userId);
+      profileImage = uploadRes.secureUrl;
+    }
 
     const updatedUser = await prisma.user.update({
       where: { id: userPayload.userId },
@@ -45,7 +51,14 @@ export async function PATCH(req: Request) {
     const updateData: any = {};
     if (body.name !== undefined) updateData.name = body.name;
     if (body.fullName !== undefined) updateData.name = body.fullName;
-    if (body.profileImage !== undefined) updateData.profileImage = body.profileImage;
+    if (body.profileImage !== undefined) {
+      let profileImg = body.profileImage;
+      if (profileImg && (profileImg.startsWith('data:') || !profileImg.startsWith('http'))) {
+        const uploadRes = await CloudinaryService.uploadProfilePhoto(profileImg, userPayload.userId);
+        profileImg = uploadRes.secureUrl;
+      }
+      updateData.profileImage = profileImg;
+    }
     if (body.language !== undefined) updateData.language = body.language;
 
     const updatedUser = await prisma.user.update({

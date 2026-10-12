@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -8,7 +8,8 @@ import {
   Image,
   ActivityIndicator,
   Alert,
-  SafeAreaView
+  SafeAreaView,
+  BackHandler
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Plus } from 'lucide-react-native';
@@ -44,6 +45,23 @@ export const CreatePostScreen: React.FC = () => {
   const currentLocality = activeArea
     ? (isMr ? activeArea.name_mr : activeArea.name_en)
     : 'Bandra West';
+
+  const handleBack = () => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      (navigation as any).navigate('ResidentMain');
+    }
+  };
+
+  useEffect(() => {
+    const onBackPress = () => {
+      handleBack();
+      return true;
+    };
+    const sub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => sub.remove();
+  }, [navigation]);
 
   const strings = {
     title: t('feed.newPostTitle'),
@@ -117,7 +135,7 @@ export const CreatePostScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       {/* Top Header */}
       <View style={styles.header}>
-        <Pressable onPress={() => navigation.goBack()} style={styles.backBtn} hitSlop={15}>
+        <Pressable onPress={handleBack} style={styles.backBtn} hitSlop={15} accessibilityLabel="Go back">
           <CustomChevronLeft size={20} color="#2A2520" strokeWidth={3} />
         </Pressable>
         <Text style={styles.headerTitle}>{strings.title}</Text>

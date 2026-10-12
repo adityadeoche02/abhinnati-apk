@@ -19,6 +19,10 @@ const envSchema = z.object({
   TWILIO_SERVICE_SID: z.string().optional(),
   SUPABASE_URL: z.string().url().optional().or(z.literal('')),
   SUPABASE_ANON_KEY: z.string().optional(),
+  CLOUDINARY_CLOUD_NAME: z.string().optional().default(''),
+  CLOUDINARY_API_KEY: z.string().optional().default(''),
+  CLOUDINARY_API_SECRET: z.string().optional().default(''),
+  CLOUDINARY_URL: z.string().optional().default(''),
 });
 
 // Parse variables

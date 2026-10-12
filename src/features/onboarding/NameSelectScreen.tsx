@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { StyleSheet, Text, View, Pressable, TextInput, ActivityIndicator, Image, Modal, TouchableWithoutFeedback, Platform, ScrollView, Keyboard } from 'react-native';
+import { StyleSheet, Text, View, Pressable, TextInput, ActivityIndicator, Image, Modal, TouchableWithoutFeedback, Platform, ScrollView, Keyboard, BackHandler } from 'react-native';
 import Animated, { useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -19,6 +19,25 @@ export const NameSelectScreen: React.FC = () => {
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+
+  const handleBack = async () => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else if (user) {
+      await logout();
+    } else {
+      (navigation as any).navigate('LanguageSelect');
+    }
+  };
+
+  useEffect(() => {
+    const onBackPress = () => {
+      handleBack();
+      return true;
+    };
+    const sub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => sub.remove();
+  }, [navigation, user]);
 
   useEffect(() => {
     const showEvt = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
@@ -81,7 +100,7 @@ export const NameSelectScreen: React.FC = () => {
     <View style={[styles.container, { paddingBottom: keyboardHeight }]}>
       {/* Header Row - Fixed at top outside ScrollView */}
       <View style={styles.header}>
-        <Pressable onPress={() => navigation.navigate('LanguageSelect')} style={styles.backButton} hitSlop={20}>
+        <Pressable onPress={handleBack} style={styles.backButton} hitSlop={20} accessibilityLabel="Go back">
           <View style={styles.backChevron} />
         </Pressable>
         <Text style={styles.title}>{strings.title}</Text>

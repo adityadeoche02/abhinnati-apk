@@ -49,7 +49,7 @@ export interface GeoResult {
 
 const NOMINATIM_BASE = 'https://nominatim.openstreetmap.org/reverse';
 const USER_AGENT = 'AbhinnatiiApp/1.0 (contact@abhinnati.com)';
-const GPS_TIMEOUT_MS = 4000;
+const GPS_TIMEOUT_MS = 20000;
 const GPS_MAX_AGE_MS = 10000;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -167,8 +167,8 @@ function getDeviceCoordinates(): Promise<{ latitude: number; longitude: number }
         enableHighAccuracy: true,
         timeout: GPS_TIMEOUT_MS,
         maximumAge: GPS_MAX_AGE_MS,
-        forceRequestLocation: true,
         showLocationDialog: true,
+        forceRequestLocation: true,
       }
     );
   });

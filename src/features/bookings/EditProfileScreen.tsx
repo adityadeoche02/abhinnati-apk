@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { StyleSheet, Text, View, Pressable, TextInput, KeyboardAvoidingView, Platform, Alert, ScrollView, Image, AlertButton } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, Text, View, Pressable, TextInput, KeyboardAvoidingView, Platform, Alert, ScrollView, Image, AlertButton, BackHandler } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useAuthStore } from '../../store/useAuthStore';
@@ -13,27 +13,64 @@ type NavigationProp = StackNavigationProp<RootStackParamList, 'EditProfile'>;
 export const EditProfileScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
   const { user, login, preferredLanguage, activeArea } = useAuthStore();
-  const [name, setName] = useState('Mahesh Kulkarni');
+  const [name, setName] = useState(user?.name || 'Mahesh Kulkarni');
   const [saving, setSaving] = useState(false);
-  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [profileImage, setProfileImage] = useState<string | null>(user?.profileImage || null);
   const [isAreaSheetVisible, setIsAreaSheetVisible] = useState(false);
+
+  const isMr = preferredLanguage === 'mr';
+
+  const handleBack = () => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      (navigation as any).navigate('ResidentMain');
+    }
+  };
+
+  useEffect(() => {
+    const onBackPress = () => {
+      handleBack();
+      return true;
+    };
+    const sub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => sub.remove();
+  }, [navigation]);
 
   const handleChangePhoto = () => {
     const options: AlertButton[] = [
       {
         text: isMr ? 'कॅमेरा' : 'Camera',
         onPress: async () => {
-          // Simulate taking a photo
-          await new Promise((r) => setTimeout(r, 600));
-          setProfileImage('https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&q=80');
+          setUploadingPhoto(true);
+          try {
+            // Sample photo payload for testing upload
+            const samplePhoto = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&q=80';
+            const res = await api.uploadProfilePhoto(samplePhoto);
+            setProfileImage(res.secure_url || res.url || samplePhoto);
+          } catch (e) {
+            console.error('Failed to upload photo:', e);
+            setProfileImage('https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&q=80');
+          } finally {
+            setUploadingPhoto(false);
+          }
         },
       },
       {
         text: isMr ? 'गॅलरीतून निवडा' : 'Choose from Gallery',
         onPress: async () => {
-          // Simulate choosing from gallery
-          await new Promise((r) => setTimeout(r, 600));
-          setProfileImage('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&q=80');
+          setUploadingPhoto(true);
+          try {
+            const samplePhoto = 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&q=80';
+            const res = await api.uploadProfilePhoto(samplePhoto);
+            setProfileImage(res.secure_url || res.url || samplePhoto);
+          } catch (e) {
+            console.error('Failed to upload photo:', e);
+            setProfileImage('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&q=80');
+          } finally {
+            setUploadingPhoto(false);
+          }
         },
       },
     ];
@@ -59,11 +96,9 @@ export const EditProfileScreen: React.FC = () => {
     );
   };
 
-  const isMr = preferredLanguage === 'mr';
-
   const strings = {
     title: isMr ? 'प्रोफाईल संपादित करा' : 'Edit Profile',
-    changePhoto: isMr ? 'फोटो बदला' : 'Change photo',
+    changePhoto: isMr ? (uploadingPhoto ? 'अपलोड होत आहे...' : 'फोटो बदला') : (uploadingPhoto ? 'Uploading...' : 'Change photo'),
     labelName: isMr ? 'नाव' : 'Name',
     labelPhone: isMr ? 'फोन' : 'Phone',
     labelArea: isMr ? 'विभाग' : 'Area',
@@ -75,10 +110,16 @@ export const EditProfileScreen: React.FC = () => {
     if (!name.trim()) return;
     setSaving(true);
     try {
-      // Mock call or api update
-      const res = await api.updateProfile({ name: name.trim() });
+      const res = await api.updateProfile({
+        name: name.trim(),
+        profileImage: profileImage || undefined,
+      });
       if (res.success && user) {
-        await login({ ...user, name: name.trim() });
+        await login({
+          ...user,
+          name: name.trim(),
+          profileImage: profileImage || user.profileImage,
+        });
       }
       Alert.alert(isMr ? 'यशस्वी' : 'Success', strings.success);
       navigation.goBack();
@@ -98,7 +139,7 @@ export const EditProfileScreen: React.FC = () => {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Pressable onPress={() => navigation.goBack()} style={styles.backBtn} hitSlop={15}>
+          <Pressable onPress={handleBack} style={styles.backBtn} hitSlop={15} accessibilityLabel="Go back">
             <View style={styles.backChevron} />
           </Pressable>
           <Text style={styles.headerTitle}>{strings.title}</Text>

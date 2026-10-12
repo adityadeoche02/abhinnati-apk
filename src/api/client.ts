@@ -5,9 +5,7 @@ import { mockDb } from './mockDb';
 
 export const USE_MOCK_API = false;
 
-const API_BASE_URL = Platform.OS === 'android'
-  ? 'http://10.0.2.2:3000/api/v1'
-  : 'http://localhost:3000/api/v1';
+const API_BASE_URL = 'http://localhost:3000/api/v1';
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -37,28 +35,8 @@ apiClient.interceptors.request.use(
 
 import { useNetworkStore } from '../store/useNetworkStore';
 
-let failedQueue: Array<{
-  resolve: (value: any) => void;
-  reject: (reason: any) => void;
-  config: any;
-}> = [];
-
-export const retryFailedRequests = async () => {
-  const queue = [...failedQueue];
-  failedQueue = [];
-  for (const item of queue) {
-    try {
-      const response = await apiClient(item.config);
-      item.resolve(response);
-    } catch (error) {
-      item.reject(error);
-    }
-  }
-};
-
 export const checkConnectivity = async (): Promise<boolean> => {
   try {
-    // Check using a lightweight request to the API base categories endpoint
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 3000);
     const res = await fetch(API_BASE_URL + '/categories', {
@@ -76,22 +54,8 @@ apiClient.interceptors.response.use(
   (response) => {
     return response;
   },
-  async (error) => {
-    const originalRequest = error.config;
-    const isNetworkError =
-      !error.response ||
-      error.message?.includes('Network request failed') ||
-      error.message?.includes('Network Error') ||
-      error.code === 'ECONNABORTED';
-
-    if (isNetworkError && originalRequest && !originalRequest._retry) {
-      originalRequest._retry = true;
-      // Queue the request for retry when network comes back
-      return new Promise((resolve, reject) => {
-        failedQueue.push({ resolve, reject, config: originalRequest });
-      });
-    }
-
+  (error) => {
+    // Always reject so caller UI catch/finally blocks execute and clear loading spinners
     return Promise.reject(error);
   }
 );
@@ -113,10 +77,14 @@ export const api = {
     // ── REAL API ───────────────────────────────────────────────────────────────
     try {
       const response = await apiClient.post('/auth/request-otp', { phone_number: phone });
-      return response.data;
+      const payload = response.data?.data || response.data;
+      return {
+        success: response.data?.success ?? payload?.success ?? true,
+        sessionId: payload?.sessionId || payload?.id || '',
+      };
     } catch (err: any) {
       console.error('[client] requestOtp failed:', err);
-      throw new Error(err.response?.data?.error || err.message || 'Failed to request OTP');
+      throw new Error(err.response?.data?.error || err.response?.data?.message || err.message || 'Failed to request OTP');
     }
   },
 
@@ -147,13 +115,20 @@ export const api = {
     // ── REAL API ───────────────────────────────────────────────────────────────
     try {
       const response = await apiClient.post('/auth/verify-otp', { session_id: sessionId, code });
-      if (response.data && response.data.success && response.data.token) {
-        await AsyncStorage.setItem('abhinnati_auth_token', response.data.token);
+      const payload = response.data?.data || response.data;
+      const token = payload?.token || payload?.accessToken || '';
+      if (token) {
+        await AsyncStorage.setItem('abhinnati_auth_token', token);
       }
-      return response.data;
+      return {
+        success: response.data?.success ?? payload?.success ?? true,
+        token,
+        isNewUser: payload?.isNewUser ?? false,
+        role: payload?.role || payload?.user?.role || 'resident',
+      };
     } catch (err: any) {
       console.error('[client] verifyOtp failed:', err);
-      throw new Error(err.response?.data?.error || err.message || 'Failed to verify OTP');
+      throw new Error(err.response?.data?.error || err.response?.data?.message || err.message || 'Failed to verify OTP');
     }
   },
 
@@ -548,6 +523,42 @@ export const api = {
       return await mockDb.getVendorNotifications();
     }
     const response = await apiClient.get(`/vendor/notifications`);
+    return response.data;
+  },
+
+  // Cloudinary File & Media Uploads
+  uploadFile: async (
+    fileData: string,
+    type: 'profile' | 'kyc' | 'document' | 'business' | 'general' = 'general',
+    resourceType: 'image' | 'raw' | 'video' | 'auto' = 'auto'
+  ): Promise<{ success: boolean; url: string; secure_url: string; public_id: string; isMock?: boolean }> => {
+    if (USE_MOCK_API) {
+      await new Promise(r => setTimeout(r, 600));
+      const mockUrl = type === 'profile'
+        ? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&q=80'
+        : type === 'document' || type === 'kyc'
+        ? 'https://res.cloudinary.com/demo/raw/upload/sample.pdf'
+        : 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=500&q=80';
+      return { success: true, url: mockUrl, secure_url: mockUrl, public_id: `mock_${Date.now()}`, isMock: true };
+    }
+    const response = await apiClient.post('/upload', { file: fileData, type, resourceType });
+    return response.data;
+  },
+
+  uploadProfilePhoto: async (fileData: string): Promise<{ success: boolean; url: string; secure_url: string }> => {
+    return api.uploadFile(fileData, 'profile', 'image');
+  },
+
+  uploadDocument: async (fileData: string, ext = 'pdf'): Promise<{ success: boolean; url: string; secure_url: string }> => {
+    return api.uploadFile(fileData, 'document', ext.toLowerCase() === 'pdf' ? 'raw' : 'auto');
+  },
+
+  updateProfile: async (data: { name?: string; fullName?: string; profileImage?: string; language?: string }): Promise<any> => {
+    if (USE_MOCK_API) {
+      await new Promise(r => setTimeout(r, 400));
+      return { success: true, message: 'Profile updated' };
+    }
+    const response = await apiClient.patch('/user/profile', data);
     return response.data;
   },
 };

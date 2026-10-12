@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, Pressable, ActivityIndicator, Dimensions } from 'react-native';
+import { StyleSheet, Text, View, Pressable, ActivityIndicator, Dimensions, BackHandler } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -20,6 +20,15 @@ export const BookingSuccessScreen: React.FC = () => {
   const route = useRoute<RouteProps>();
   const { bookingId } = route.params;
   const { preferredLanguage, user } = useAuthStore();
+
+  useEffect(() => {
+    const onBackPress = () => {
+      navigation.navigate('ResidentMain');
+      return true;
+    };
+    const sub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => sub.remove();
+  }, [navigation]);
 
   const [booking, setBooking] = useState<Booking | null>(null);
 

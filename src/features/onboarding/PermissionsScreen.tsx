@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { StyleSheet, Text, View, Pressable, ActivityIndicator, Modal, ScrollView, PermissionsAndroid, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, Text, View, Pressable, ActivityIndicator, Modal, ScrollView, PermissionsAndroid, Platform, BackHandler, AppState } from 'react-native';
 import Animated, { useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import { MapPin, Bell } from 'lucide-react-native';
+import { MapPin, Bell, Check } from 'lucide-react-native';
 import Svg, { Path, Circle, Rect } from 'react-native-svg';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '../../store/useAuthStore';
@@ -55,7 +55,86 @@ export const PermissionsScreen: React.FC = () => {
   const [error, setError] = useState('');
   const [detectedArea, setDetectedArea] = useState<any>(null);
   const [showPromptModal, setShowPromptModal] = useState(false);
+  const [locationGranted, setLocationGranted] = useState(false);
+  const [notificationsGranted, setNotificationsGranted] = useState(false);
+  const [promptsFinished, setPromptsFinished] = useState(false);
   const isMr = preferredLanguage === 'mr';
+
+  const handleBack = () => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      (navigation as any).navigate('NameSelect');
+    }
+  };
+
+  useEffect(() => {
+    const onBackPress = () => {
+      handleBack();
+      return true;
+    };
+    const sub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => sub.remove();
+  }, [navigation]);
+
+  useEffect(() => {
+    if (Platform.OS !== 'android') return;
+    PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION)
+      .then(setLocationGranted)
+      .catch(() => {});
+    if (Number(Platform.Version) >= 33) {
+      PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS)
+        .then(setNotificationsGranted)
+        .catch(() => {});
+    } else {
+      setNotificationsGranted(true);
+    }
+  }, []);
+
+  const waitUntilActive = () => {
+    if (AppState.currentState === 'active') return Promise.resolve();
+    return new Promise<void>((resolve) => {
+      const sub = AppState.addEventListener('change', (state) => {
+        if (state === 'active') {
+          sub.remove();
+          resolve();
+        }
+      });
+      setTimeout(() => {
+        sub.remove();
+        resolve();
+      }, 1200);
+    });
+  };
+
+  const requestLocationPermission = async () => {
+    if (Platform.OS !== 'android') {
+      setLocationGranted(true);
+      return true;
+    }
+    const fine = await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+    );
+    const coarseGranted = fine === PermissionsAndroid.RESULTS.GRANTED
+      ? true
+      : await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION);
+    const granted = fine === PermissionsAndroid.RESULTS.GRANTED || coarseGranted;
+    setLocationGranted(granted);
+    return granted;
+  };
+
+  const requestNotificationPermission = async () => {
+    if (Platform.OS !== 'android' || Number(Platform.Version) < 33) {
+      setNotificationsGranted(true);
+      return true;
+    }
+    const result = await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
+    );
+    const granted = result === PermissionsAndroid.RESULTS.GRANTED;
+    setNotificationsGranted(granted);
+    return granted;
+  };
 
   const strings = {
     title: t('permissions.title'),
@@ -65,6 +144,9 @@ export const PermissionsScreen: React.FC = () => {
     notifTitle: t('permissions.notificationTitle'),
     notifDesc: t('permissions.notificationDesc'),
     btnAllow: t('permissions.btnAllow'),
+    btnContinue: t('permissions.continueToApp'),
+    locationGranted: t('permissions.locationGranted'),
+    notificationsGranted: t('permissions.notificationsGranted'),
     loadingLocation: t('permissions.loadingLocation'),
     modalTitle: t('permissions.modalTitle'),
     modalBody: (name: string) => t('permissions.modalBody', { name }),
@@ -73,53 +155,36 @@ export const PermissionsScreen: React.FC = () => {
   };
 
   const handleStart = async () => {
-    setError('');
-    setLoading(true);
-    
-    // 1. Force Notification Permission Prompt (if supported)
-    if (Platform.OS === 'android') {
-      try {
-        if (Platform.Version >= 33) {
-          await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS);
-        }
-      } catch (err) {
-        console.warn('Notification permission error:', err);
-      }
+    if (promptsFinished && !detectedArea) {
+      navigation.navigate('LocationSelect');
+      return;
     }
 
-    // 2. Force Location Permission Prompt (to bypass mock mode skipping it)
-    if (Platform.OS === 'android') {
-      try {
-        await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-          {
-            title: 'Location Permission',
-            message: 'Abhinnati needs your location to find nearby services and your area.',
-            buttonNeutral: 'Ask Me Later',
-            buttonNegative: 'Deny',
-            buttonPositive: 'Allow',
-          }
-        );
-      } catch (err) {
-        console.warn('Location permission error:', err);
-      }
+    setError('');
+    setLoading(true);
+
+    let locationOk = locationGranted;
+    try {
+      locationOk = await requestLocationPermission();
+      await waitUntilActive();
+      await requestNotificationPermission();
+      await waitUntilActive();
+    } catch (err) {
+      console.warn('[PermissionsScreen] Permission prompt error:', err);
+    }
+    setPromptsFinished(true);
+
+    if (!locationOk) {
+      setLoading(false);
+      return;
     }
 
     try {
-      // geoService handles the GPS + Nominatim reverse geocode
       setGpsLoading(true);
-      const result = await geoService.getCurrentLocation(true);
-
-      if (result.error === 'permission_denied') {
-        // User denied permission — go straight to manual location selection
-        navigation.navigate('LocationSelect');
-        return;
-      }
+      const result = await geoService.getCurrentLocation(false);
 
       if (!result.success || result.latitude === null) {
-        // GPS unavailable or geocode failed
         setError(result.errorMessage || t('permissions.locationNotFound'));
-        navigation.navigate('LocationSelect');
         return;
       }
 
@@ -159,7 +224,6 @@ export const PermissionsScreen: React.FC = () => {
     } catch (err: any) {
       console.error('[PermissionsScreen] GPS error:', err);
       setError(t('common.somethingWentWrong'));
-      navigation.navigate('LocationSelect');
     } finally {
       setLoading(false);
       setGpsLoading(false);
@@ -219,7 +283,7 @@ export const PermissionsScreen: React.FC = () => {
       
       {/* Header Row - Fixed at top */}
       <View style={styles.header}>
-        <Pressable onPress={() => navigation.goBack()} style={styles.backButton} hitSlop={20}>
+        <Pressable onPress={handleBack} style={styles.backButton} hitSlop={20} accessibilityLabel="Go back">
           <View style={styles.backChevron} />
         </Pressable>
       </View>
@@ -237,27 +301,43 @@ export const PermissionsScreen: React.FC = () => {
 
         {/* Cards Wrapper */}
         <View style={styles.cardsWrapper}>
-          {/* Location permission card */}
-          <View style={styles.card}>
+          <Pressable
+            onPress={requestLocationPermission}
+            disabled={loading || gpsLoading}
+            style={[styles.card, locationGranted && styles.cardGranted]}
+            accessibilityRole="button"
+            accessibilityState={{ checked: locationGranted }}
+          >
             <View style={styles.iconFrame}>
               <MapPin size={18} color="#E58A2B" fill="#E58A2B" />
             </View>
             <View style={styles.cardTextContainer}>
               <Text style={styles.cardTitle}>{strings.locTitle}</Text>
-              <Text style={styles.cardSubtitle} numberOfLines={1}>{strings.locDesc}</Text>
+              <Text style={styles.cardSubtitle} numberOfLines={1}>
+                {locationGranted ? strings.locationGranted : strings.locDesc}
+              </Text>
             </View>
-          </View>
+            {locationGranted ? <Check size={18} color="#E58A2B" strokeWidth={2.5} /> : null}
+          </Pressable>
 
-          {/* Notifications permission card */}
-          <View style={styles.card}>
+          <Pressable
+            onPress={requestNotificationPermission}
+            disabled={loading || gpsLoading}
+            style={[styles.card, notificationsGranted && styles.cardGranted]}
+            accessibilityRole="button"
+            accessibilityState={{ checked: notificationsGranted }}
+          >
             <View style={styles.iconFrame}>
               <Bell size={18} color="#E58A2B" fill="#E58A2B" />
             </View>
             <View style={styles.cardTextContainer}>
               <Text style={styles.cardTitle}>{strings.notifTitle}</Text>
-              <Text style={styles.cardSubtitle} numberOfLines={1}>{strings.notifDesc}</Text>
+              <Text style={styles.cardSubtitle} numberOfLines={1}>
+                {notificationsGranted ? strings.notificationsGranted : strings.notifDesc}
+              </Text>
             </View>
-          </View>
+            {notificationsGranted ? <Check size={18} color="#E58A2B" strokeWidth={2.5} /> : null}
+          </Pressable>
         </View>
 
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
@@ -274,7 +354,9 @@ export const PermissionsScreen: React.FC = () => {
             {loading || gpsLoading ? (
               <ActivityIndicator color="#FFFFFF" size="small" />
             ) : (
-              <Text style={styles.submitButtonText}>{strings.btnAllow}</Text>
+              <Text style={styles.submitButtonText}>
+                {promptsFinished ? strings.btnContinue : strings.btnAllow}
+              </Text>
             )}
           </Pressable>
         </Animated.View>
@@ -399,6 +481,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 14,
+  },
+  cardGranted: {
+    borderColor: '#E58A2B',
+    backgroundColor: '#FDF1DF',
   },
   iconFrame: {
     width: 40,

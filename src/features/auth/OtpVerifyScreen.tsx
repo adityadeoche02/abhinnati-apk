@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { StyleSheet, Text, View, Pressable, TextInput, Platform, ActivityIndicator, Keyboard, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, Pressable, TextInput, Platform, ActivityIndicator, Keyboard, ScrollView, BackHandler } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { ChevronLeft } from 'lucide-react-native';
@@ -18,7 +18,7 @@ export const OtpVerifyScreen: React.FC = () => {
   const { preferredLanguage, login } = useAuthStore();
 
   const [step, setStep] = useState<'phone' | 'otp'>('phone');
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState(route.params?.phone || '');
   const [otpCode, setOtpCode] = useState('');
   const [sessionId, setSessionId] = useState('');
   const [loading, setLoading] = useState(false);
@@ -26,11 +26,40 @@ export const OtpVerifyScreen: React.FC = () => {
   const [timer, setTimer] = useState(30);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
 
+  const handleBack = () => {
+    if (step === 'otp') {
+      setStep('phone');
+      setOtpCode('');
+      setError('');
+    } else {
+      if (navigation.canGoBack()) {
+        navigation.goBack();
+      } else {
+        (navigation as any).navigate('LanguageSelect');
+      }
+    }
+  };
+
+  useEffect(() => {
+    const onBackPress = () => {
+      handleBack();
+      return true;
+    };
+    const sub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => sub.remove();
+  }, [step, navigation]);
+
   const otpInputRef = useRef<TextInput>(null);
   const phoneInputRef = useRef<TextInput>(null);
 
   const isMr = preferredLanguage === 'mr';
   const otpLength = 6;
+
+  useEffect(() => {
+    if (route.params?.phone && route.params.phone.length === 10) {
+      handleSendOtp(route.params.phone);
+    }
+  }, [route.params?.phone]);
 
   useEffect(() => {
     const showEvt = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
@@ -75,8 +104,7 @@ export const OtpVerifyScreen: React.FC = () => {
 
   const handleSendOtp = async (phoneOverride?: any) => {
     const rawPhone = (typeof phoneOverride === 'string') ? phoneOverride : phoneNumber;
-    let checkPhone = rawPhone;
-    if (checkPhone.length === 9) checkPhone = checkPhone + '0';
+    const checkPhone = rawPhone.trim();
     if (checkPhone.length !== 10 || isNaN(Number(checkPhone))) {
       setError(strings.invalidPhone);
       return;
@@ -86,7 +114,7 @@ export const OtpVerifyScreen: React.FC = () => {
     try {
       const formattedPhone = `+91${checkPhone}`;
       const res = await api.requestOtp(formattedPhone);
-      if (res.success) {
+      if (res.success && res.sessionId) {
         setSessionId(res.sessionId);
         setStep('otp');
         setTimer(30);
@@ -150,17 +178,10 @@ export const OtpVerifyScreen: React.FC = () => {
       {/* Header Row - Fixed at top */}
       <View style={styles.header}>
         <Pressable
-          onPress={() => {
-            if (step === 'otp') {
-              setStep('phone');
-              setOtpCode('');
-              setError('');
-            } else {
-              navigation.goBack();
-            }
-          }}
+          onPress={handleBack}
           style={styles.backButton}
           hitSlop={20}
+          accessibilityLabel="Go back"
         >
           <View style={styles.backChevron} />
         </Pressable>
@@ -187,7 +208,6 @@ export const OtpVerifyScreen: React.FC = () => {
                     setError('');
                     const cleaned = val.replace(/[^0-9]/g, '').slice(0, 10);
                     setPhoneNumber(cleaned);
-                    if (cleaned.length >= 9) setTimeout(() => handleSendOtp(cleaned), 400);
                   }}
                   placeholder={strings.phonePlaceholder}
                   placeholderTextColor="#A89A82"

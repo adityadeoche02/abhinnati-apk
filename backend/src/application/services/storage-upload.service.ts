@@ -3,12 +3,26 @@ import { BadRequestError } from '../../presentation/utils/response';
 
 export class StorageUploadService {
   private static readonly ALLOWED_MIME_TYPES = [
+    // Images (Profile photos, banners, receipts, etc.)
     'image/jpeg',
     'image/png',
     'image/webp',
+    'image/gif',
+    'image/svg+xml',
+    'image/heic',
+    'image/heif',
+    // Documents (PDFs, KYC certificates, etc.)
     'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'text/plain',
+    'text/csv',
+    // Media
+    'video/mp4',
+    'video/quicktime',
+    'audio/mpeg',
   ];
-  private static readonly MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+  private static readonly MAX_FILE_SIZE = 25 * 1024 * 1024; // 25 MB
 
   /**
    * Validates, processes/compresses, and uploads a file to Supabase storage.

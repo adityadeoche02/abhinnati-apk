@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, ActivityIndicator, Pressable } from 'react-native';
+import { StyleSheet, Text, View, ActivityIndicator, Pressable, BackHandler } from 'react-native';
 import Svg, { Circle, Line, Path } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -21,6 +21,23 @@ export const KycStatusScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
   const { user, preferredLanguage, setUserMode, activeArea } = useAuthStore();
   
+  const handleBack = () => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      (navigation as any).navigate('ResidentMain');
+    }
+  };
+
+  useEffect(() => {
+    const onBackPress = () => {
+      handleBack();
+      return true;
+    };
+    const sub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => sub.remove();
+  }, [navigation]);
+
   const [vendor, setVendor] = useState<Vendor | null>(null);
   const [loading, setLoading] = useState(true);
   const [approving, setApproving] = useState(false);
@@ -151,7 +168,7 @@ export const KycStatusScreen: React.FC = () => {
       {/* Navigation Header - Hide in approved live state */}
       {!isApproved && (
         <View style={styles.header}>
-          <Pressable onPress={() => navigation.navigate('ResidentMain')} style={styles.backBtn} hitSlop={15}>
+          <Pressable onPress={handleBack} style={styles.backBtn} hitSlop={15} accessibilityLabel="Go back">
             <Svg width={6} height={12} viewBox="0 0 6 12">
               <Path d="M5 1L1 6l4 5" stroke="#2A2520" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" fill="none" />
             </Svg>

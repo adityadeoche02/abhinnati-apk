@@ -6,7 +6,8 @@ import {
   Pressable,
   ActivityIndicator,
   Alert,
-  ScrollView
+  ScrollView,
+  BackHandler
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -50,6 +51,23 @@ export const BookingDetailScreen: React.FC = () => {
   const [updating, setUpdating] = useState(false);
   const [userRating, setUserRating] = useState<number>(0);
   const [canModify, setCanModify] = useState(true);
+
+  const handleBack = () => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      (navigation as any).navigate('ResidentMain');
+    }
+  };
+
+  useEffect(() => {
+    const onBackPress = () => {
+      handleBack();
+      return true;
+    };
+    const sub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => sub.remove();
+  }, [navigation]);
 
   useEffect(() => {
     if (!booking) return;
@@ -213,7 +231,7 @@ export const BookingDetailScreen: React.FC = () => {
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       {/* Top Header */}
       <View style={styles.header}>
-        <Pressable onPress={() => navigation.goBack()} style={styles.backBtn} hitSlop={15}>
+        <Pressable onPress={handleBack} style={styles.backBtn} hitSlop={15} accessibilityLabel="Go back">
           <CustomChevronLeft size={20} color="#2A2520" strokeWidth={3} />
           <Text style={styles.backText}>{booking.vendorName}</Text>
         </Pressable>
