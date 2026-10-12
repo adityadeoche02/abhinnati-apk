@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { StyleSheet, Text, View, Pressable, Alert, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, Text, View, Pressable, Alert, ScrollView, BackHandler } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useAuthStore } from '../../store/useAuthStore';
@@ -42,6 +42,23 @@ export const SettingsScreen: React.FC = () => {
   const [promotions, setPromotions] = useState(false);
 
   const isMr = preferredLanguage === 'mr';
+
+  const handleBack = () => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      (navigation as any).navigate('ResidentMain');
+    }
+  };
+
+  useEffect(() => {
+    const onBackPress = () => {
+      handleBack();
+      return true;
+    };
+    const sub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => sub.remove();
+  }, [navigation]);
 
   const strings = {
     title: isMr ? 'सेटिंग्ज' : 'Settings',

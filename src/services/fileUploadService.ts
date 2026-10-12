@@ -1,3 +1,5 @@
+import { api } from '../api/client';
+
 export type UploadStatus = 'idle' | 'uploading' | 'uploaded' | 'failed';
 
 export interface KYCFile {
@@ -10,14 +12,20 @@ export interface KYCFile {
   uploadedAt?: string;
   previewUri?: string;
   fileData?: string;
+  cloudinaryUrl?: string;
+  publicId?: string;
 }
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25 MB
 const SUPPORTED_MIME_TYPES = [
   'application/pdf',
   'image/jpeg',
   'image/jpg',
-  'image/png'
+  'image/png',
+  'image/webp',
+  'image/heic',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 ];
 
 export const fileUploadService = {
@@ -29,7 +37,7 @@ export const fileUploadService = {
     if (!SUPPORTED_MIME_TYPES.includes(mimeType.toLowerCase())) {
       return {
         valid: false,
-        error: 'Unsupported File Format. Please upload a PDF, JPG, JPEG, or PNG file.'
+        error: 'Unsupported File Format. Please upload a PDF, JPG, JPEG, PNG or document file.'
       };
     }
 
@@ -37,7 +45,7 @@ export const fileUploadService = {
     if (fileSize > MAX_FILE_SIZE) {
       return {
         valid: false,
-        error: 'File Too Large. Maximum allowed size is 10 MB.'
+        error: 'File Too Large. Maximum allowed size is 25 MB.'
       };
     }
 
@@ -49,7 +57,7 @@ export const fileUploadService = {
    */
   compressImage: async (file: KYCFile): Promise<KYCFile> => {
     if (file.mimeType.startsWith('image/')) {
-      // Simulate 40% size reduction on images
+      // Simulate size reduction on images
       const compressedSize = Math.round(file.fileSize * 0.6);
       return {
         ...file,
@@ -66,16 +74,14 @@ export const fileUploadService = {
    */
   requestPermission: async (type: 'camera' | 'gallery'): Promise<'granted' | 'denied'> => {
     return new Promise((resolve) => {
-      // In development simulation, it resolves with 'granted'.
-      // UI overlays will handle developer mock settings toggle if needed.
       setTimeout(() => {
         resolve('granted');
-      }, 500);
+      }, 300);
     });
   },
 
   /**
-   * Simulates network upload with progress callbacks
+   * Cloudinary upload with progress simulation & network dispatch
    */
   startUpload: (
     file: KYCFile,
@@ -83,31 +89,59 @@ export const fileUploadService = {
     onComplete: (updatedFile: KYCFile) => void,
     onFail: (error: string) => void
   ) => {
-    let progress = 0;
+    let progress = 10;
     let isCancelled = false;
+    onProgress(progress);
 
     const interval = setInterval(() => {
       if (isCancelled) return;
+      if (progress < 85) {
+        progress += Math.floor(Math.random() * 15) + 10;
+        if (progress > 85) progress = 85;
+        onProgress(progress);
+      }
+    }, 150);
 
-      // Increment progress in random steps (between 5% and 20%)
-      progress += Math.floor(Math.random() * 15) + 5;
+    // Perform the actual upload if fileData exists
+    (async () => {
+      try {
+        const isPdf = file.mimeType === 'application/pdf';
+        const uploadType = isPdf ? 'document' : 'kyc';
+        const resourceType = isPdf ? 'raw' : 'image';
 
-      if (progress >= 100) {
-        progress = 100;
+        let uploadResult = {
+          url: file.previewUri || '',
+          secure_url: file.previewUri || '',
+          public_id: `upload_${Date.now()}`,
+        };
+
+        if (file.fileData) {
+          const res = await api.uploadFile(file.fileData, uploadType, resourceType);
+          if (res && res.secure_url) {
+            uploadResult = res;
+          }
+        }
+
+        if (isCancelled) return;
         clearInterval(interval);
         onProgress(100);
-        
-        // Simulating mock server success state
+
         onComplete({
           ...file,
           uploadProgress: 100,
           uploadStatus: 'uploaded',
           uploadedAt: new Date().toISOString(),
+          cloudinaryUrl: uploadResult.secure_url || uploadResult.url,
+          previewUri: uploadResult.secure_url || uploadResult.url || file.previewUri,
+          publicId: uploadResult.public_id,
         });
-      } else {
-        onProgress(progress);
+      } catch (err: any) {
+        if (isCancelled) return;
+        clearInterval(interval);
+        console.error('[fileUploadService] upload failed:', err);
+        onFail(err.message || 'Upload failed');
       }
-    }, 200);
+    })();
 
     return {
       cancel: () => {

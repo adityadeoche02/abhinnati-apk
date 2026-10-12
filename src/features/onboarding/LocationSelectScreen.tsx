@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { 
   StyleSheet, 
   Text, 
@@ -7,7 +7,8 @@ import {
   ActivityIndicator, 
   ToastAndroid, 
   Platform,
-  Alert
+  Alert,
+  BackHandler
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -67,6 +68,25 @@ export const LocationSelectScreen: React.FC = () => {
     loadingLocation: t('location.loadingLocation'),
     toastPermission: t('location.toastPermission'),
   };
+
+  const handleBack = () => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else if (isNewOnboarding) {
+      (navigation as any).navigate('Permissions');
+    } else {
+      (navigation as any).navigate('ResidentMain');
+    }
+  };
+
+  useEffect(() => {
+    const onBackPress = () => {
+      handleBack();
+      return true;
+    };
+    const sub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => sub.remove();
+  }, [navigation, isNewOnboarding]);
 
   // Toast notification fallback
   const showToast = (message: string) => {
@@ -186,7 +206,7 @@ export const LocationSelectScreen: React.FC = () => {
           
           {/* Back chevron button */}
           <Pressable
-            onPress={() => navigation.goBack()}
+            onPress={handleBack}
             style={styles.backButton}
             hitSlop={15}
             accessibilityLabel="Go back"
@@ -306,12 +326,12 @@ export const LocationSelectScreen: React.FC = () => {
       {/* Top dashboard navigation action */}
       <View style={styles.topActionsRow}>
         <Pressable 
-          onPress={() => navigation.navigate('ResidentMain')} 
+          onPress={handleBack} 
           style={styles.headerBackBtn}
-          accessibilityLabel="Go back to Home"
+          accessibilityLabel="Go back"
         >
           <ChevronLeft size={22} color="#2A2520" />
-          <Text style={styles.headerBackText}>{isMr ? 'होम' : 'Home'}</Text>
+          <Text style={styles.headerBackText}>{isMr ? 'मागे' : 'Back'}</Text>
         </Pressable>
         {isAuthenticated && (
           <Pressable onPress={handleLogout} style={styles.headerLogoutBtn}>

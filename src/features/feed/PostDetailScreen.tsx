@@ -10,7 +10,8 @@ import {
   Platform,
   ActivityIndicator,
   Image,
-  Share
+  Share,
+  BackHandler
 } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { ArrowRight, Heart, MessageCircle, Share2 } from 'lucide-react-native';
@@ -51,6 +52,23 @@ export const PostDetailScreen: React.FC = () => {
     noComments: t('feed.noCommentsYet'),
     reply: t('feed.reply'),
   };
+
+  const handleBack = () => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      (navigation as any).navigate('ResidentMain');
+    }
+  };
+
+  useEffect(() => {
+    const onBackPress = () => {
+      handleBack();
+      return true;
+    };
+    const sub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => sub.remove();
+  }, [navigation]);
 
   const loadThreadData = async () => {
     try {
@@ -216,7 +234,7 @@ export const PostDetailScreen: React.FC = () => {
       <SafeAreaView style={styles.flex} edges={['top', 'left', 'right']}>
         {/* Top Header */}
         <View style={styles.header}>
-          <Pressable onPress={() => navigation.goBack()} style={styles.backBtn} hitSlop={15}>
+          <Pressable onPress={handleBack} style={styles.backBtn} hitSlop={15} accessibilityLabel="Go back">
             <CustomChevronLeft size={20} color="#2A2520" strokeWidth={3} />
             <Text style={styles.backText}>{strings.backText}</Text>
           </Pressable>

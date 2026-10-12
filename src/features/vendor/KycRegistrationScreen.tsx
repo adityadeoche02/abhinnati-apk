@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { StyleSheet, Text, View, ScrollView, Pressable, ActivityIndicator, TextInput, Modal, FlatList, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, Text, View, ScrollView, Pressable, ActivityIndicator, TextInput, Modal, FlatList, Alert, BackHandler } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -18,6 +18,23 @@ export const KycRegistrationScreen: React.FC = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<NavigationProp>();
   const { user, preferredLanguage } = useAuthStore();
+
+  const handleBack = () => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      (navigation as any).navigate('ResidentMain');
+    }
+  };
+
+  useEffect(() => {
+    const onBackPress = () => {
+      handleBack();
+      return true;
+    };
+    const sub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => sub.remove();
+  }, [navigation]);
 
   const [bizName, setBizName] = useState("Aai's Bakery");
   const [selectedCat, setSelectedCat] = useState("Bakery");
@@ -241,7 +258,7 @@ export const KycRegistrationScreen: React.FC = () => {
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       {/* Navigation Header */}
       <View style={styles.header}>
-        <Pressable onPress={() => navigation.goBack()} style={styles.backBtn} hitSlop={15}>
+        <Pressable onPress={handleBack} style={styles.backBtn} hitSlop={15} accessibilityLabel="Go back">
           <Svg width={6} height={12} viewBox="0 0 6 12">
             <Path d="M5 1L1 6l4 5" stroke="#2A2520" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" fill="none" />
           </Svg>

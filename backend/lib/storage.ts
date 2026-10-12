@@ -1,12 +1,13 @@
 import { Buffer } from 'buffer';
 import { logger } from './logger';
 import { config } from './config';
+import { CloudinaryService, isCloudinaryConfigured } from './cloudinary';
 
 export interface IStorageService {
   /**
-   * Uploads a file (provided as base64 string or data URI) to the specified storage bucket.
+   * Uploads a file (provided as base64 string or data URI) to storage.
    * 
-   * @param bucket - The storage bucket name (e.g., 'profile-images', 'kyc-docs').
+   * @param bucket - The storage folder/bucket name (e.g., 'profile-images', 'kyc-docs').
    * @param filename - The unique name of the target file.
    * @param base64Data - Base64 encoded file data.
    * @param mimeType - Optional file MIME type.
@@ -15,9 +16,60 @@ export interface IStorageService {
   uploadFile(bucket: string, filename: string, base64Data: string, mimeType?: string): Promise<string>;
 }
 
+class CloudinaryStorageService implements IStorageService {
+  async uploadFile(
+    bucket: string,
+    filename: string,
+    base64Data: string,
+    mimeType: string = 'application/octet-stream'
+  ): Promise<string> {
+    if (base64Data.startsWith('http://') || base64Data.startsWith('https://')) {
+      logger.info(`[Storage] Input is already a public URL: ${base64Data}`);
+      return base64Data;
+    }
+
+    let resolvedMimeType = mimeType;
+    let base64String = base64Data;
+
+    const dataUriMatch = base64Data.match(/^data:([a-zA-Z0-9+.-]+\/[a-zA-Z0-9+.-]+);base64,(.+)$/);
+    if (dataUriMatch) {
+      resolvedMimeType = dataUriMatch[1];
+      base64String = dataUriMatch[2];
+    }
+
+    // Determine resource type
+    let resourceType: 'image' | 'raw' | 'video' | 'auto' = 'auto';
+    if (resolvedMimeType.startsWith('image/')) {
+      resourceType = 'image';
+    } else if (resolvedMimeType.startsWith('video/')) {
+      resourceType = 'video';
+    } else if (resolvedMimeType === 'application/pdf' || resolvedMimeType.includes('pdf')) {
+      resourceType = 'raw';
+    }
+
+    // Determine folder
+    const folder = `abhinnati/${bucket.replace(/^\/+|\/+$/g, '')}`;
+    const cleanPublicId = filename.replace(/\.[^/.]+$/, ''); // Strip extension if present
+
+    const uploadPayload = dataUriMatch ? base64Data : `data:${resolvedMimeType};base64,${base64String}`;
+
+    const result = await CloudinaryService.upload(uploadPayload, {
+      folder,
+      publicId: cleanPublicId,
+      resourceType,
+    });
+
+    return result.secureUrl || result.url;
+  }
+}
+
 class SupabaseStorageService implements IStorageService {
-  async uploadFile(bucket: string, filename: string, base64Data: string, mimeType: string = 'application/octet-stream'): Promise<string> {
-    // If the input is already a public HTTP/HTTPS URL, return it directly
+  async uploadFile(
+    bucket: string,
+    filename: string,
+    base64Data: string,
+    mimeType: string = 'application/octet-stream'
+  ): Promise<string> {
     if (base64Data.startsWith('http://') || base64Data.startsWith('https://')) {
       logger.info(`[Storage] Input is already a public URL, skipping upload: ${base64Data}`);
       return base64Data;
@@ -26,16 +78,13 @@ class SupabaseStorageService implements IStorageService {
     let resolvedMimeType = mimeType;
     let base64String = base64Data;
 
-    // Check if the data is a base64 Data URI
     const dataUriMatch = base64Data.match(/^data:([a-zA-Z+.-]+\/[a-zA-Z+.-]+);base64,(.+)$/);
     if (dataUriMatch) {
       resolvedMimeType = dataUriMatch[1];
       base64String = dataUriMatch[2];
     }
 
-    const SUPABASE_PROJECT_REF = 'ocsokyjpiclytbxyuiaq'; // Default project ref from db url
-    
-    // Determine the base storage URL and authorization header
+    const SUPABASE_PROJECT_REF = 'ocsokyjpiclytbxyuiaq';
     const storageApiBase = config.SUPABASE_URL 
       ? config.SUPABASE_URL.replace(/\/$/, '')
       : `https://${SUPABASE_PROJECT_REF}.supabase.co`;
@@ -69,10 +118,32 @@ class SupabaseStorageService implements IStorageService {
       return publicUrl;
     } catch (error) {
       logger.error(`[Storage] Upload error for ${filename} to bucket ${bucket}:`, error);
-      // Fallback to public mock URL in local dev environments
       return publicUrl;
     }
   }
 }
 
-export const storageService = new SupabaseStorageService();
+/**
+ * Unified storage service:
+ * Uses Cloudinary by default or falls back to Supabase if configured.
+ */
+class UnifiedStorageService implements IStorageService {
+  private cloudinary = new CloudinaryStorageService();
+  private supabase = new SupabaseStorageService();
+
+  async uploadFile(bucket: string, filename: string, base64Data: string, mimeType?: string): Promise<string> {
+    if (isCloudinaryConfigured()) {
+      return this.cloudinary.uploadFile(bucket, filename, base64Data, mimeType);
+    }
+
+    if (config.SUPABASE_URL && config.SUPABASE_ANON_KEY) {
+      return this.supabase.uploadFile(bucket, filename, base64Data, mimeType);
+    }
+
+    // Default to Cloudinary handler (which has smart dev fallback)
+    return this.cloudinary.uploadFile(bucket, filename, base64Data, mimeType);
+  }
+}
+
+export const storageService = new UnifiedStorageService();
+export const cloudinaryStorageService = new CloudinaryStorageService();

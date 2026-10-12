@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, Pressable, ScrollView, FlatList, ActivityIndicator } from 'react-native';
+import { StyleSheet, Text, View, Pressable, ScrollView, FlatList, ActivityIndicator, BackHandler } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useTranslation } from 'react-i18next';
@@ -56,6 +56,24 @@ export const BookingScreen: React.FC = () => {
   const [slotsLoading, setSlotsLoading] = useState(false);
 
   const isMr = preferredLanguage === 'mr';
+
+  const handleBack = () => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      (navigation as any).navigate('ResidentMain');
+    }
+  };
+
+  useEffect(() => {
+    const onBackPress = () => {
+      handleBack();
+      return true;
+    };
+    const sub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => sub.remove();
+  }, [navigation]);
+
   const strings = {
     back: t('common.back'),
     title: t('bookings.chooseSlot'),
@@ -154,7 +172,7 @@ export const BookingScreen: React.FC = () => {
     <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom']}>
       {/* Navigation Header */}
       <View style={styles.navigationHeader}>
-        <Pressable onPress={() => navigation.goBack()} style={styles.backRow}>
+        <Pressable onPress={handleBack} style={styles.backRow} accessibilityLabel="Go back">
           <CustomChevronLeft size={20} color="#2A2520" strokeWidth={3} />
           <Text style={styles.headerTitle}>{strings.title}</Text>
         </Pressable>

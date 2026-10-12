@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { StyleSheet, Text, View, Pressable, ScrollView, ActivityIndicator, Image, Modal, Linking } from 'react-native';
+import { StyleSheet, Text, View, Pressable, ScrollView, ActivityIndicator, Image, Modal, Linking, BackHandler } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useTranslation } from 'react-i18next';
@@ -243,6 +243,23 @@ export const BusinessProfileScreen: React.FC = () => {
   const phone = (vendor as any).phone;
   const whatsapp = (vendor as any).whatsapp;
 
+  const handleBack = () => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      (navigation as any).navigate('ResidentMain');
+    }
+  };
+
+  useEffect(() => {
+    const onBackPress = () => {
+      handleBack();
+      return true;
+    };
+    const sub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => sub.remove();
+  }, [navigation]);
+
   const photos = [
     { id: '1', color: '#F6E2C4', label: 'Custom Cake' },
     { id: '2', color: '#D3E2D8', label: 'Daily Bread' },
@@ -274,7 +291,7 @@ export const BusinessProfileScreen: React.FC = () => {
         {/* Cover Section */}
         <View style={styles.coverContainer}>
           {/* Back chevron button */}
-          <Pressable onPress={() => navigation.goBack()} style={styles.backBtnAbsolute} hitSlop={10}>
+          <Pressable onPress={handleBack} style={styles.backBtnAbsolute} hitSlop={10} accessibilityLabel="Go back">
             <CustomChevronLeft size={24} color="#2A2520" strokeWidth={3} />
           </Pressable>
           
