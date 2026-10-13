@@ -435,7 +435,9 @@ export class VendorService {
         current = JSON.parse(vendor.blockedSlots);
       } catch {}
     }
-    current.push({ date, startTime, endTime, reason });
+    if (!current.some((item: any) => item.date === date && item.startTime === startTime && item.endTime === endTime)) {
+      current.push({ date, startTime, endTime, reason });
+    }
     return this.vendorRepository.updateVendor(userId, {
       blockedSlots: JSON.stringify(current)
     });

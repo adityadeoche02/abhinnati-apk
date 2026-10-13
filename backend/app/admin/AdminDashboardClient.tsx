@@ -122,16 +122,16 @@ export default function AdminDashboardClient({ initialVendors, stats: initialSta
                     <td>
                       <div className={styles.vendorInfo}>
                         <div className={styles.avatar}>
-                          {vendor.business?.nameEn?.charAt(0) || vendor.user.name?.charAt(0) || 'B'}
+                          {vendor.business?.nameEn?.charAt(0) || vendor.user?.name?.charAt(0) || 'B'}
                         </div>
                         <div>
                           <div className={styles.vendorName}>{vendor.business?.nameEn || 'Unknown Business'}</div>
-                          <div className={styles.vendorBusiness}>{vendor.user.name}</div>
+                          <div className={styles.vendorBusiness}>{vendor.user?.name || 'Registered Vendor'}</div>
                         </div>
                       </div>
                     </td>
                     <td>{vendor.business?.categoryNameEn || 'Uncategorized'}</td>
-                    <td>{vendor.user.phone}</td>
+                    <td>{vendor.user?.phone || 'N/A'}</td>
                     <td>
                       <span className={`${styles.badge} ${styles.pending}`}>
                         <Clock size={14} /> Pending

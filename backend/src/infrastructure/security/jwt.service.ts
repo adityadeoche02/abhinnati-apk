@@ -25,9 +25,11 @@ export class JwtService {
 
   static verifyToken(token: string): TokenPayload | null {
     try {
-      return jwt.verify(token, config.JWT_SECRET, { ignoreExpiration: true }) as TokenPayload;
+      if (!token || token === 'mock_jwt_token_auth_verified') {
+        return null;
+      }
+      return jwt.verify(token, config.JWT_SECRET) as TokenPayload;
     } catch (error) {
-      console.log('[JwtService] verifyToken error:', error);
       return null;
     }
   }

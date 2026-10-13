@@ -1,6 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { CloudinaryService, isCloudinaryConfigured } from '../../../../lib/cloudinary';
+import { verifyAuth } from '../../../../lib/auth';
 import { AuthMiddleware } from '../../../../src/presentation/middleware/auth.middleware';
+
+export const dynamic = 'force-dynamic';
+
+const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
+const MAX_DOCUMENT_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
+
+const ALLOWED_IMAGE_MIMES = new Set([
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+]);
+
+const ALLOWED_DOC_MIMES = new Set([
+  'application/pdf',
+  'image/jpeg',
+  'image/jpg',
+  'image/png',
+  'image/webp',
+]);
+
+const DISALLOWED_EXTENSIONS = new Set([
+  'exe', 'sh', 'bat', 'cmd', 'php', 'js', 'ts', 'jsx', 'tsx', 'html', 'htm', 'py', 'rb', 'pl', 'jar'
+]);
 
 export async function GET() {
   return NextResponse.json({
@@ -15,24 +41,39 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    // 1. Enforce Authentication
+    let authUser = await verifyAuth(req);
+    let authUserId: string | null = authUser?.id || null;
+
+    if (!authUser) {
+      try {
+        const userPayload = await AuthMiddleware.authenticate(req);
+        if (userPayload?.userId) {
+          authUserId = userPayload.userId;
+        }
+      } catch (_) {
+        // Not authenticated
+      }
+    }
+
+    if (!authUserId) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized: Authentication required to upload files' },
+        { status: 401 }
+      );
+    }
+
     let fileData: string | Buffer | null = null;
     let folder = 'abhinnati/general';
     let resourceType: 'image' | 'raw' | 'video' | 'auto' = 'auto';
     let publicId: string | undefined;
-
-    // Optional user authentication (doesn't fail if guest/unauthenticated registration)
-    let authUserId: string | null = null;
-    try {
-      const user = await AuthMiddleware.authenticate(req);
-      if (user && user.userId) {
-        authUserId = user.userId;
-      }
-    } catch {
-      // Guest or pre-login upload is permissible
-    }
+    let fileSizeBytes = 0;
+    let detectedMime = '';
+    let originalName = 'upload';
 
     const contentType = req.headers.get('content-type') || '';
 
+    // 2. Parse Multipart or JSON body
     if (contentType.includes('multipart/form-data')) {
       const formData = await req.formData();
       const file = formData.get('file') as File | null;
@@ -45,6 +86,10 @@ export async function POST(req: NextRequest) {
           { status: 400 }
         );
       }
+
+      originalName = file.name || 'file';
+      detectedMime = file.type || '';
+      fileSizeBytes = file.size;
 
       const bytes = await file.arrayBuffer();
       fileData = Buffer.from(bytes);
@@ -65,12 +110,13 @@ export async function POST(req: NextRequest) {
         resourceType = customResourceType;
       }
 
-      publicId = `${file.name.replace(/\.[^/.]+$/, '').replace(/[^a-zA-Z0-9_-]/g, '_')}_${Date.now()}`;
+      publicId = `${originalName.replace(/\.[^/.]+$/, '').replace(/[^a-zA-Z0-9_-]/g, '_')}_${Date.now()}`;
     } else {
       // JSON body
-      const body = await req.json();
+      const body = await req.json().catch(() => ({}));
       fileData = body.file || body.fileData || body.base64 || body.image || body.document;
       const typeParam = body.type || body.folder;
+      originalName = body.fileName || body.name || 'upload';
 
       if (!fileData) {
         return NextResponse.json(
@@ -79,12 +125,37 @@ export async function POST(req: NextRequest) {
         );
       }
 
+      if (typeof fileData === 'string') {
+        // Detect MIME and size from Data URI
+        if (fileData.startsWith('data:')) {
+          const match = fileData.match(/^data:([^;]+);base64,(.+)$/);
+          if (match) {
+            detectedMime = match[1];
+            // Calculate size from base64 string
+            const base64Data = match[2];
+            fileSizeBytes = Math.round((base64Data.length * 3) / 4);
+          } else {
+            return NextResponse.json(
+              { success: false, error: 'Invalid Data URI format' },
+              { status: 400 }
+            );
+          }
+        } else if (fileData.startsWith('http://') || fileData.startsWith('https://')) {
+          fileSizeBytes = 1024; // External URL reference
+        } else {
+          // Raw base64 string
+          fileSizeBytes = Math.round((fileData.length * 3) / 4);
+        }
+      } else if (Buffer.isBuffer(fileData)) {
+        fileSizeBytes = fileData.length;
+      }
+
       if (typeParam === 'profile' || typeParam === 'avatar') {
         folder = 'abhinnati/profiles';
         resourceType = 'image';
       } else if (typeParam === 'kyc' || typeParam === 'document' || typeParam === 'pdf') {
         folder = 'abhinnati/documents';
-        resourceType = typeof fileData === 'string' && fileData.includes('application/pdf') ? 'raw' : 'auto';
+        resourceType = (detectedMime === 'application/pdf' || originalName.endsWith('.pdf')) ? 'raw' : 'auto';
       } else if (typeParam === 'business') {
         folder = 'abhinnati/business';
       } else if (typeParam) {
@@ -99,11 +170,51 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const tags = ['abhinnati'];
-    if (authUserId) {
-      tags.push(`user_${authUserId}`);
+    // 3. Extension and Disallowed File Types Validation
+    const extMatch = originalName.match(/\.([a-zA-Z0-9]+)$/);
+    const extension = extMatch ? extMatch[1].toLowerCase() : '';
+
+    if (extension && DISALLOWED_EXTENSIONS.has(extension)) {
+      return NextResponse.json(
+        { success: false, error: `Disallowed file type: .${extension}. Executables and scripts are prohibited.` },
+        { status: 400 }
+      );
     }
 
+    // 4. MIME Type Validation
+    const isDocFolder = folder.includes('documents') || folder.includes('kyc');
+    if (detectedMime) {
+      if (isDocFolder) {
+        if (!ALLOWED_DOC_MIMES.has(detectedMime.toLowerCase())) {
+          return NextResponse.json(
+            { success: false, error: `Invalid document type (${detectedMime}). Allowed: PDF, JPG, PNG, WEBP.` },
+            { status: 400 }
+          );
+        }
+      } else {
+        if (!ALLOWED_IMAGE_MIMES.has(detectedMime.toLowerCase())) {
+          return NextResponse.json(
+            { success: false, error: `Invalid image type (${detectedMime}). Allowed: JPG, PNG, WEBP, GIF.` },
+            { status: 400 }
+          );
+        }
+      }
+    }
+
+    // 5. File Size Limit Validation
+    const maxSize = isDocFolder ? MAX_DOCUMENT_SIZE_BYTES : MAX_IMAGE_SIZE_BYTES;
+    if (fileSizeBytes > maxSize) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `File size exceeds the limit of ${maxSize / (1024 * 1024)}MB (actual: ${(fileSizeBytes / (1024 * 1024)).toFixed(2)}MB)`,
+        },
+        { status: 400 }
+      );
+    }
+
+    // 6. Execute Upload via CloudinaryService
+    const tags = ['abhinnati', `user_${authUserId}`];
     const result = await CloudinaryService.upload(fileData, {
       folder,
       resourceType,
@@ -120,11 +231,11 @@ export async function POST(req: NextRequest) {
       format: result.format,
       bytes: result.bytes,
       isMock: result.isMock,
-    });
+    }, { status: 201 });
   } catch (error: any) {
-    console.error('Error in POST /api/v1/upload:', error);
+    console.error('Error in POST /api/v1/upload:', error?.message || error);
     return NextResponse.json(
-      { success: false, error: error.message || 'Failed to upload file to Cloudinary' },
+      { success: false, error: 'Failed to process file upload' },
       { status: 500 }
     );
   }

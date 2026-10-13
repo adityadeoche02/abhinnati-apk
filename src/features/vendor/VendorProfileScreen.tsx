@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 18,
     paddingTop: 10,
-    paddingBottom: 40,
+    paddingBottom: 110,
   },
   userCard: {
     backgroundColor: '#FFFFFF',

@@ -21,7 +21,7 @@ export class RequestOtpUseCase {
       expiresAt,
     });
 
-    console.log(`[RequestOtpUseCase] Created OTP Session - Phone: ${phoneNumber}, Code: ${otpCode}, Session ID: ${otpSession.id}`);
+    console.log(`[RequestOtpUseCase] Created OTP Session for Phone: ${phoneNumber.slice(0, 3)}***${phoneNumber.slice(-2)}, Session ID: ${otpSession.id}`);
 
     return {
       success: true,

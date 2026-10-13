@@ -1,21 +1,27 @@
 import jwt from 'jsonwebtoken';
 import { prisma } from './prisma';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'boilerplate_secret_key_for_abhinnati_jwt';
-
 export interface JwtPayload {
   userId: string;
   phone: string;
   role: string;
 }
 
+function getJwtSecret(): string {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('JWT_SECRET is not configured in environment');
+  }
+  return secret;
+}
+
 export function signToken(payload: JwtPayload): string {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: '1h' });
+  return jwt.sign(payload, getJwtSecret(), { expiresIn: '1h' });
 }
 
 export function requireRole(user: { role: string }, allowedRoles: string[]) {
   if (!allowedRoles.includes(user.role)) {
-    throw new Error('Forbidden: Insufficient permissions');
+    throw new Error('Forbidden: Insufficient permissions for this operation');
   }
 }
 
@@ -26,27 +32,31 @@ export async function verifyAuth(req: Request) {
       return null;
     }
 
-    const token = authHeader.split(' ')[1];
+    const token = authHeader.split(' ')[1]?.trim();
     if (!token || token === 'mock_jwt_token_auth_verified') {
-      // Direct mock token fallback for rapid local transition testing if needed
-      // Find the first user in the database
-      const fallbackUser = await prisma.user.findFirst({
-        include: { vendorProfile: true }
-      });
-      return fallbackUser;
+      // Disallow mock token bypasses for real API requests
+      return null;
     }
 
-    const isProd = process.env.NODE_ENV === 'production';
-    const decoded = jwt.verify(token, JWT_SECRET, { ignoreExpiration: !isProd }) as JwtPayload;
-    
+    const secret = getJwtSecret();
+    const decoded = jwt.verify(token, secret) as JwtPayload;
+
+    if (!decoded || !decoded.userId) {
+      return null;
+    }
+
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
-      include: { vendorProfile: true }
+      include: { vendorProfile: true },
     });
-    
+
+    if (!user || !user.isActive || user.deletedAt) {
+      return null;
+    }
+
     return user;
-  } catch (error) {
-    console.error('Auth verification error:', error);
+  } catch (error: any) {
+    // Return null on expired or invalid token without leaking secrets in logs
     return null;
   }
 }

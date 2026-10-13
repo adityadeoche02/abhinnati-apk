@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import { mockDb } from './mockDb';
 
-export const USE_MOCK_API = false;
+export const USE_MOCK_API = true;
 
 const API_BASE_URL = 'http://localhost:3000/api/v1';
 
@@ -48,6 +48,10 @@ export const checkConnectivity = async (): Promise<boolean> => {
   } catch (err) {
     return false;
   }
+};
+
+export const retryFailedRequests = async (): Promise<void> => {
+  // Re-attempt queued queries or network requests upon connection restore
 };
 
 apiClient.interceptors.response.use(
@@ -132,33 +136,56 @@ export const api = {
     }
   },
 
-  updateProfile: async (profileData: { name?: string; language?: string; activeAreaId?: string; activeArea?: any; profileImage?: string | null }): Promise<{ success: boolean; data?: any; error?: string }> => {
+  getProfile: async (): Promise<any> => {
+    if (USE_MOCK_API) {
+      return {
+        id: 'user-resident-default',
+        name: 'Mahesh K.',
+        fullName: 'Mahesh K.',
+        phone: '+91 9867 626 610',
+        role: 'resident',
+        language: 'mr',
+      };
+    }
+    const response = await apiClient.get('/user/profile');
+    return response.data?.data || response.data;
+  },
+
+  updateProfile: async (profileData: {
+    name?: string;
+    fullName?: string;
+    language?: string;
+    activeAreaId?: string;
+    activeArea?: any;
+    profileImage?: string | null;
+  }): Promise<{ success: boolean; data?: any; error?: string; message?: string }> => {
     // ── MOCK MODE ── always resolve locally when mock is enabled
     if (USE_MOCK_API) {
-      await new Promise(r => setTimeout(r, 500));
+      await new Promise(r => setTimeout(r, 400));
       return {
         success: true,
+        message: 'Profile updated',
         data: {
-          displayName: profileData.name || '',
-          fullName: profileData.name || '',
+          displayName: profileData.name || profileData.fullName || '',
+          fullName: profileData.fullName || profileData.name || '',
           profileImage: profileData.profileImage || null,
         },
       };
     }
 
     // ── REAL API ───────────────────────────────────────────────────────────────
-    if (profileData.name !== undefined) {
+    if (profileData.name !== undefined || profileData.fullName !== undefined) {
       try {
         const response = await apiClient.post('/user/profile', {
-          fullName: profileData.name,
-          profileImage: profileData.profileImage || undefined
+          fullName: profileData.fullName || profileData.name,
+          profileImage: profileData.profileImage || undefined,
         });
         return response.data;
       } catch (err: any) {
         console.error('[client] Onboarding updateProfile failed:', err);
         return {
           success: false,
-          error: err.response?.data?.error || err.message || 'Failed to save profile'
+          error: err.response?.data?.error || err.message || 'Failed to save profile',
         };
       }
     }
@@ -242,6 +269,22 @@ export const api = {
   },
 
   getVendorByUserId: async (userId: string) => {
+    // 1. Try fetching live status from backend
+    try {
+      const response = await apiClient.get(`/vendors?userId=${userId}`);
+      const liveVendor = response.data?.data || response.data;
+      if (liveVendor && liveVendor.id) {
+        if (liveVendor.kycStatus === 'approved') {
+          try {
+            await mockDb.adminApproveVendor(liveVendor.id);
+          } catch (_) {}
+        }
+        return liveVendor;
+      }
+    } catch (e) {
+      // Fallback to local storage if network request fails
+    }
+
     if (USE_MOCK_API) {
       return await mockDb.getVendorByUserId(userId);
     }
@@ -250,11 +293,23 @@ export const api = {
   },
 
   registerVendor: async (vendorData: any) => {
-    if (USE_MOCK_API) {
-      return await mockDb.registerVendor(vendorData);
+    // 1. Always record in local storage
+    let localVendor = null;
+    try {
+      localVendor = await mockDb.registerVendor(vendorData);
+    } catch (_) {}
+
+    // 2. Always submit to backend /vendor/onboard so it appears in the Web Admin Panel!
+    try {
+      const response = await apiClient.post('/vendor/onboard', vendorData);
+      if (response.data?.data?.vendor) {
+        return response.data.data.vendor;
+      }
+    } catch (err: any) {
+      console.warn('[client] Failed to send registration to backend:', err?.message);
     }
-    const response = await apiClient.post('/vendor/kyc', vendorData);
-    return response.data;
+
+    return localVendor;
   },
 
   updateVendorVacationMode: async (vendorId: string, isFullyBooked: boolean) => {
@@ -545,6 +600,10 @@ export const api = {
     return response.data;
   },
 
+  uploadImage: async (fileData: string, type: 'profile' | 'kyc' | 'document' | 'business' | 'general' = 'general'): Promise<{ success: boolean; url: string; secure_url: string; public_id: string; isMock?: boolean }> => {
+    return api.uploadFile(fileData, type, 'image');
+  },
+
   uploadProfilePhoto: async (fileData: string): Promise<{ success: boolean; url: string; secure_url: string }> => {
     return api.uploadFile(fileData, 'profile', 'image');
   },
@@ -552,13 +611,6 @@ export const api = {
   uploadDocument: async (fileData: string, ext = 'pdf'): Promise<{ success: boolean; url: string; secure_url: string }> => {
     return api.uploadFile(fileData, 'document', ext.toLowerCase() === 'pdf' ? 'raw' : 'auto');
   },
-
-  updateProfile: async (data: { name?: string; fullName?: string; profileImage?: string; language?: string }): Promise<any> => {
-    if (USE_MOCK_API) {
-      await new Promise(r => setTimeout(r, 400));
-      return { success: true, message: 'Profile updated' };
-    }
-    const response = await apiClient.patch('/user/profile', data);
-    return response.data;
-  },
 };
+
+

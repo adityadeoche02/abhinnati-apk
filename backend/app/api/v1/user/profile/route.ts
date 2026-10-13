@@ -3,6 +3,49 @@ import { prisma } from '../../../../../lib/prisma';
 import { AuthMiddleware } from '../../../../../src/presentation/middleware/auth.middleware';
 import { CloudinaryService } from '../../../../../lib/cloudinary';
 
+export async function GET(req: Request) {
+  try {
+    const userPayload = await AuthMiddleware.authenticate(req as any);
+    const user = await prisma.user.findUnique({
+      where: { id: userPayload.userId },
+      include: {
+        vendorProfile: {
+          include: {
+            business: true,
+          },
+        },
+      },
+    });
+
+    if (!user) {
+      return NextResponse.json(
+        { success: false, error: 'User not found' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        id: user.id,
+        name: user.name,
+        fullName: user.name,
+        phone: user.phone,
+        email: user.email,
+        role: user.role,
+        language: user.language,
+        profileImage: user.profileImage,
+        vendor: user.vendorProfile,
+      },
+    });
+  } catch (error: any) {
+    return NextResponse.json(
+      { success: false, error: error.message || 'Unauthorized' },
+      { status: 401 }
+    );
+  }
+}
+
 export async function POST(req: Request) {
   try {
     const userPayload = await AuthMiddleware.authenticate(req as any);

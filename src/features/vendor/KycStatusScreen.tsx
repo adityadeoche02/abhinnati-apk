@@ -40,7 +40,6 @@ export const KycStatusScreen: React.FC = () => {
 
   const [vendor, setVendor] = useState<Vendor | null>(null);
   const [loading, setLoading] = useState(true);
-  const [approving, setApproving] = useState(false);
 
   const isMr = preferredLanguage === 'mr';
   const localityName = isMr ? vendor?.categoryNameMr : vendor?.businessNameEn; // or active area
@@ -64,6 +63,22 @@ export const KycStatusScreen: React.FC = () => {
     try {
       const v = await api.getVendorByUserId(user.id);
       setVendor(v);
+
+      // If pending, make sure backend database has this vendor queued for admin approval
+      if (v && (v.kycStatus === 'pending' || !v.kycStatus)) {
+        api.registerVendor({
+          userId: user.id,
+          businessNameEn: v.businessNameEn || 'My Shop',
+          businessNameMr: v.businessNameMr || v.businessNameEn || 'माझे दुकान',
+          categoryNameEn: v.categoryNameEn || 'Retail',
+          categoryNameMr: v.categoryNameMr || 'दुकान',
+          categorySlug: v.categorySlug || 'general',
+          descriptionEn: v.descriptionEn || '',
+          descriptionMr: v.descriptionMr || '',
+          phone: user.phone,
+          userName: user.name || 'Shop Owner',
+        }).catch(() => {});
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -73,23 +88,12 @@ export const KycStatusScreen: React.FC = () => {
 
   useEffect(() => {
     checkStatus();
+    // Poll backend every 3 seconds while under review so that when Admin approves in Admin Panel, the phone updates immediately
+    const interval = setInterval(() => {
+      checkStatus();
+    }, 3000);
+    return () => clearInterval(interval);
   }, [user]);
-
-  // Instant simulator bypass
-  const handleBypassApprove = async () => {
-    if (!vendor) return;
-    setApproving(true);
-    try {
-      const approved = await api.adminApproveVendor(vendor.id);
-      if (approved) {
-        setVendor(approved);
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setApproving(false);
-    }
-  };
 
   const handleGoToDashboard = async () => {
     await setUserMode('vendor');
@@ -236,15 +240,6 @@ export const KycStatusScreen: React.FC = () => {
               <Text style={styles.notifyText}>{strings.notifyText}</Text>
             </View>
           </View>
-        )}
-
-        {/* Developer Bypass simulation button */}
-        {!isApproved && (
-          <Pressable onPress={handleBypassApprove} style={styles.bypassBtn}>
-            <Text style={styles.bypassBtnText}>
-              {approving ? 'Approving...' : 'Dev Bypass: Approve Instantly'}
-            </Text>
-          </Pressable>
         )}
       </View>
 
@@ -409,18 +404,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Mukta-Regular',
     color: '#6B5F4E',
     lineHeight: 22,
-  },
-  bypassBtn: {
-    marginTop: 40,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    backgroundColor: '#EBE8FC',
-  },
-  bypassBtnText: {
-    fontSize: 12,
-    fontFamily: 'Mukta-SemiBold',
-    color: '#7C3AED',
   },
   footer: {
     position: 'absolute',
