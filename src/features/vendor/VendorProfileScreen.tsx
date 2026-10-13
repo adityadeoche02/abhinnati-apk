@@ -62,10 +62,10 @@ export const VendorProfileScreen: React.FC = () => {
     );
   }
 
-  const nameInitial = user?.name ? user.name.charAt(0).toUpperCase() : 'S';
-  const userPhone = user?.phone || '+91 9867 626 610';
-  const userArea = isMr ? (activeArea?.name_mr || 'बांद्रा वेस्ट') : (activeArea?.name_en || 'Bandra West');
-  const businessName = isMr ? (vendor?.businessNameMr || vendor?.businessNameEn || "Aai's Bakery") : (vendor?.businessNameEn || "Aai's Bakery");
+  const nameInitial = user?.name ? user.name.charAt(0).toUpperCase() : (user?.phone ? user.phone.slice(-1) : 'V');
+  const userPhone = user?.phone || '';
+  const userArea = activeArea ? (isMr ? activeArea.name_mr : activeArea.name_en) : (isMr ? 'परिसर निवडलेला नाही' : 'No area selected');
+  const businessName = vendor ? (isMr ? (vendor.businessNameMr || vendor.businessNameEn) : vendor.businessNameEn) : (isMr ? 'व्यवसाय नोंदणी नाही' : 'No Business Registered');
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
@@ -87,14 +87,22 @@ export const VendorProfileScreen: React.FC = () => {
         {/* User Details Card */}
         <View style={styles.userCard}>
           <View style={styles.avatarCircle}>
-            <Image 
-              source={{ uri: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150' }} 
-              style={styles.avatarImage} 
-            />
+            {user?.profileImage ? (
+              <Image
+                source={{ uri: user.profileImage }}
+                style={styles.avatarImage}
+              />
+            ) : (
+              <View style={[styles.avatarImage, { backgroundColor: '#FDECD4', justifyContent: 'center', alignItems: 'center' }]}>
+                <Text style={{ fontSize: 24, fontWeight: '700', color: '#9A5A12' }}>
+                  {nameInitial}
+                </Text>
+              </View>
+            )}
           </View>
           <View style={styles.userInfo}>
-            <Text style={styles.userName}>{user?.name || 'Sneha Patil'}</Text>
-            <Text style={styles.userPhone}>{userPhone}</Text>
+            <Text style={styles.userName}>{user?.name || user?.phone || (isMr ? 'विक्रेता' : 'Vendor')}</Text>
+            {userPhone ? <Text style={styles.userPhone}>{userPhone}</Text> : null}
             <Text style={styles.userArea}>{userArea}</Text>
           </View>
         </View>

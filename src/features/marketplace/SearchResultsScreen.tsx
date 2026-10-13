@@ -148,12 +148,18 @@ export const SearchResultsScreen: React.FC = () => {
   };
 
   const getLogoBg = (name: string) => {
-    const lowerName = name.toLowerCase();
-    if (lowerName.includes('anil')) return ['#F6E2C4', '#EFD3AE'];
-    if (lowerName.includes('sai')) return ['#E8EFE9', '#D5E5DA'];
-    if (lowerName.includes('mahesh')) return ['#EFE2F0', '#E0D0E8'];
-    if (lowerName.includes('quick')) return ['#F6E2C4', '#EAD0B0'];
-    return ['#F6E2C4', '#EFD3AE'];
+    const palettes = [
+      ['#F6E2C4', '#EFD3AE'],
+      ['#E8EFE9', '#D5E5DA'],
+      ['#EFE2F0', '#E0D0E8'],
+      ['#F6E2C4', '#EAD0B0'],
+      ['#FCEADE', '#F7D6C1'],
+    ];
+    let hash = 0;
+    for (let i = 0; i < (name || '').length; i++) {
+      hash = (hash + name.charCodeAt(i)) % palettes.length;
+    }
+    return palettes[hash];
   };
 
   const handleTabPress = (tabName: 'Home' | 'Explore' | 'Bookings' | 'Profile') => {

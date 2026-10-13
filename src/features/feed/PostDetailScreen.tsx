@@ -160,21 +160,19 @@ export const PostDetailScreen: React.FC = () => {
   };
 
   const getCommentColors = (name: string) => {
-    const uppercaseName = name.toUpperCase();
-    if (uppercaseName.includes('MAHESH') || uppercaseName.includes('महेश')) {
+    const charCode = (name || 'U').charCodeAt(0) + (name || '').length;
+    if (charCode % 2 === 0) {
       return { bg: '#E2F0EC', text: '#2D6B5E' };
     }
-    // Default/Priya warm orange/peach
     return { bg: '#FBE7CC', text: '#9A5A12' };
   };
 
   const getTimeAgoString = (comment: Comment) => {
-    const uppercaseName = comment.authorName.toUpperCase();
-    if (uppercaseName.includes('MAHESH')) return '1h';
-    if (uppercaseName.includes('PRIYA')) return '40m';
-    
-    // Otherwise calculate relative time dynamically
-    const diffMs = Date.now() - new Date(comment.createdAt).getTime();
+    if (!comment.createdAt) return isMr ? 'आता' : 'Just now';
+    const commentTime = new Date(comment.createdAt).getTime();
+    if (isNaN(commentTime)) return isMr ? 'आता' : 'Just now';
+
+    const diffMs = Date.now() - commentTime;
     const diffMins = Math.floor(diffMs / 60000);
     if (diffMins < 1) return isMr ? 'आता' : 'Just now';
     if (diffMins < 60) return `${diffMins}${isMr ? 'मि' : 'm'}`;

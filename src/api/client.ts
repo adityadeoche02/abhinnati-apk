@@ -5,7 +5,11 @@ import { mockDb } from './mockDb';
 
 export const USE_MOCK_API = true;
 
-const API_BASE_URL = 'http://localhost:3000/api/v1';
+declare const process: any;
+
+const DEFAULT_HOST = Platform.OS === 'android' ? 'http://10.0.2.2:3000' : 'http://localhost:3000';
+const envApiUrl = typeof process !== 'undefined' && process?.env ? process.env.API_BASE_URL : undefined;
+const API_BASE_URL = envApiUrl || `${DEFAULT_HOST}/api/v1`;
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,

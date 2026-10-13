@@ -44,7 +44,7 @@ export const KycStatusScreen: React.FC = () => {
   const isMr = preferredLanguage === 'mr';
   const localityName = isMr ? vendor?.categoryNameMr : vendor?.businessNameEn; // or active area
 
-  const areaName = activeArea ? (isMr ? activeArea.name_mr : activeArea.name_en) : (isMr ? 'वांद्रे पश्चिम' : 'Bandra West');
+  const areaName = activeArea ? (isMr ? activeArea.name_mr : activeArea.name_en) : (isMr ? 'तुमचा परिसर' : 'Your area');
 
   const strings = {
     back: t('vendor.verification'),

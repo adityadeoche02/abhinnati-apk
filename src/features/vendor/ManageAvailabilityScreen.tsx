@@ -42,22 +42,25 @@ export const ManageAvailabilityScreen: React.FC = () => {
   });
 
   // 2. Vacation Mode state
+  const todayStr = new Date().toISOString().split('T')[0];
+  const nextWeekStr = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
   const [vacationMode, setVacationMode] = useState(false);
-  const [vacationStart, setVacationStart] = useState('2026-07-15');
-  const [vacationEnd, setVacationEnd] = useState('2026-07-22');
+  const [vacationStart, setVacationStart] = useState(todayStr);
+  const [vacationEnd, setVacationEnd] = useState(nextWeekStr);
   const [vacationReason, setVacationReason] = useState('');
 
   // 3. Block Dates state
   const [blockedDates, setBlockedDates] = useState<{ date: string; reason?: string }[]>([]);
-  const [newBlockDate, setNewBlockDate] = useState('2026-07-15');
-  const [newBlockDateReason, setNewBlockDateReason] = useState('Festival');
+  const [newBlockDate, setNewBlockDate] = useState(todayStr);
+  const [newBlockDateReason, setNewBlockDateReason] = useState('');
 
   // 4. Block Slots state
   const [blockedSlots, setBlockedSlots] = useState<{ date: string; startTime: string; endTime: string; reason?: string }[]>([]);
-  const [newBlockSlotDate, setNewBlockSlotDate] = useState('2026-07-15');
+  const [newBlockSlotDate, setNewBlockSlotDate] = useState(todayStr);
   const [newBlockSlotStart, setNewBlockSlotStart] = useState('02:00 PM');
   const [newBlockSlotEnd, setNewBlockSlotEnd] = useState('05:00 PM');
-  const [newBlockSlotReason, setNewBlockSlotReason] = useState('Personal Leave');
+  const [newBlockSlotReason, setNewBlockSlotReason] = useState('');
 
   // 5. Service Radius state
   const [serviceRadius, setServiceRadius] = useState('5 km');

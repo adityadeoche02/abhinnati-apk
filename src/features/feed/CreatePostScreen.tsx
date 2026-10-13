@@ -44,7 +44,7 @@ export const CreatePostScreen: React.FC = () => {
   const isMr = preferredLanguage === 'mr';
   const currentLocality = activeArea
     ? (isMr ? activeArea.name_mr : activeArea.name_en)
-    : 'Bandra West';
+    : (isMr ? 'तुमचा परिसर' : 'Your area');
 
   const handleBack = () => {
     if (navigation.canGoBack()) {
@@ -75,13 +75,13 @@ export const CreatePostScreen: React.FC = () => {
   };
 
   const getInitials = (name: string) => {
-    if (!name) return 'S';
+    if (!name) return 'U';
     const parts = name.trim().split(/\s+/);
     if (parts.length === 1) return parts[0].slice(0, 1).toUpperCase();
     return (parts[0][0] + (parts[1]?.[0] || '')).toUpperCase();
   };
 
-  const authorName = user?.name || 'Sneha P.';
+  const authorName = user?.name || user?.phone || (isMr ? 'स्थानिक रहिवासी' : 'Local Resident');
   const avatarInitials = getInitials(authorName);
 
   const handleUploadImage = async () => {
@@ -100,11 +100,15 @@ export const CreatePostScreen: React.FC = () => {
 
   const handlePost = async () => {
     if (!content.trim() || !activeArea) return;
+    if (!user) {
+      Alert.alert(isMr ? 'त्रुटी' : 'Error', isMr ? 'कृपया प्रथम लॉगिन करा.' : 'Please login first.');
+      return;
+    }
     setSubmitting(true);
     try {
       const titleText = content.slice(0, 30);
       await api.createPost({
-        authorId: user?.id || 'guest',
+        authorId: user.id,
         authorName,
         areaId: activeArea.id,
         tag,

@@ -106,7 +106,7 @@ export const EmptyFeedScreen: React.FC = () => {
 
   const isMr = preferredLanguage === 'mr';
   const localityName = isMr ? activeArea?.name_mr : activeArea?.name_en;
-  const displayLocality = localityName || (isMr ? 'वांद्रे पश्चिम' : 'Bandra west');
+  const displayLocality = localityName || (isMr ? 'तुमचा परिसर' : 'Your area');
 
   const strings = {
     title: t('feed.areaJustStarted', { area: displayLocality }),

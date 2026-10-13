@@ -236,6 +236,35 @@ Targeted integration test suite executed against live Supabase PostgreSQL backen
   1. **Payment Flow:** Still simulated via client-side timer. Requires real payment gateway integration (e.g., Razorpay / UPI Intent).
   2. **SMS Delivery:** Cellular SMS credentials need to be configured for live SMS delivery to real phones.
   3. **Area Persistence:** `User.activeAreaId` schema change pending user approval.
-- **Safety Precaution:** `USE_MOCK_API = true` is strictly retained in [`src/api/client.ts`](file:///c:/Users/Yash/OneDrive/Desktop/Innonsh%20Project/abhinnati-apk/src/api/client.ts).
-- **Execution Strategy:** Review Group 3 results, followed by resolution of the payment and SMS blockers before performing the final cutover.
+---
 
+## 9. Hard-Coded Values Removal & Clean Up Audit (Stage 6)
+
+### 9.1 Summary of Changes
+A comprehensive sweep was performed across the Abhinnati project (mobile screens, state stores, navigation, and API configuration) to identify and eliminate hard-coded user IDs, vendor names, static sample identities, static dates, static metrics, and static base URLs.
+
+| File Path | Type of Hard-Coded Value Removed | Dynamic Replacement Implemented |
+|---|---|---|
+| [`src/features/bookings/PaymentGatewayScreen.tsx`](file:///c:/Users/Yash/OneDrive/Desktop/Innonsh%20Project/abhinnati-apk/src/features/bookings/PaymentGatewayScreen.tsx) | Hardcoded `'vendor-1'`, `'Aai’s Bakery'`, `'srv-aai-1'`, `'600'`, `'guest-user'`, `'+910000000000'` | Strict parameter validation requiring active service/vendor details; uses authenticated `user.id`, `user.name`, `user.phone` |
+| [`src/features/bookings/ProfileDashboardScreen.tsx`](file:///c:/Users/Yash/OneDrive/Desktop/Innonsh%20Project/abhinnati-apk/src/features/bookings/ProfileDashboardScreen.tsx) | Hardcoded `'Sneha Patil'`, `'+91 9867 626 610'`, `'Bandra West'`, `'Aai’s Bakery'` | Authenticated `user.name`, `user.phone`, dynamic avatar initial, dynamic active area, localized registration state |
+| [`src/features/bookings/EditProfileScreen.tsx`](file:///c:/Users/Yash/OneDrive/Desktop/Innonsh%20Project/abhinnati-apk/src/features/bookings/EditProfileScreen.tsx) | Hardcoded initial state `'Mahesh Kulkarni'` | Dynamic initial state `user?.name \|\| ''` |
+| [`src/features/vendor/VendorProfileScreen.tsx`](file:///c:/Users/Yash/OneDrive/Desktop/Innonsh%20Project/abhinnati-apk/src/features/vendor/VendorProfileScreen.tsx) | Hardcoded `'Sneha Patil'`, `'+91 9867 626 610'`, `'बांद्रा वेस्ट' / 'Bandra West'`, `"Aai's Bakery"` | Authenticated vendor/user name, phone, dynamic initial, dynamic active area name, dynamic business name |
+| [`src/features/vendor/VendorDashboardScreen.tsx`](file:///c:/Users/Yash/OneDrive/Desktop/Innonsh%20Project/abhinnati-apk/src/features/vendor/VendorDashboardScreen.tsx) | Hardcoded area ternary (`vendor.areaId === 'area-bandra' ? 'Bandra West' : 'Ravet'`) and static views metric `128` | Resolves area name dynamically from active area; views metric computed dynamically from vendor data and total bookings |
+| [`src/features/feed/CreatePostScreen.tsx`](file:///c:/Users/Yash/OneDrive/Desktop/Innonsh%20Project/abhinnati-apk/src/features/feed/CreatePostScreen.tsx) | Hardcoded author `'Sneha P.'`, initial `'S'`, locality `'Bandra West'`, fallback `'guest'` | Authenticated `user.id`, `user.name`, dynamic initial, and active area locality |
+| [`src/features/feed/MyAreaFeedScreen.tsx`](file:///c:/Users/Yash/OneDrive/Desktop/Innonsh%20Project/abhinnati-apk/src/features/feed/MyAreaFeedScreen.tsx) | Hardcoded post UUID `'e2c0e8a7-3df8-4bf8-b9a3-5c21f7b8c7a1'` and hardcoded post locality `'वांद्रे पश्चिम' / 'Bandra West'` | Resolves area dynamically; uses post's dynamic area name and localized labels |
+| [`src/features/feed/PostDetailScreen.tsx`](file:///c:/Users/Yash/OneDrive/Desktop/Innonsh%20Project/abhinnati-apk/src/features/feed/PostDetailScreen.tsx) | Hardcoded author name checks for `'MAHESH'` (`'1h'`) and `'PRIYA'` (`'40m'`); static avatar colors | Pure dynamic relative timestamp calculation for all comments; deterministic hash color palettes |
+| [`src/features/feed/EmptyFeedScreen.tsx`](file:///c:/Users/Yash/OneDrive/Desktop/Innonsh%20Project/abhinnati-apk/src/features/feed/EmptyFeedScreen.tsx) | Hardcoded locality fallback `'वांद्रे पश्चिम' / 'Bandra west'` | Dynamic locality resolution from active area with localized generic fallback |
+| [`src/features/marketplace/BusinessProfileScreen.tsx`](file:///c:/Users/Yash/OneDrive/Desktop/Innonsh%20Project/abhinnati-apk/src/features/marketplace/BusinessProfileScreen.tsx) | Hardcoded string checks for `'vendor-aai'` and hardcoded service IDs (`srv-aai-1`, `srv-aai-2`, `srv-aai-3`) | Dynamic service identification and rendering from vendor service array |
+| [`src/features/marketplace/SearchResultsScreen.tsx`](file:///c:/Users/Yash/OneDrive/Desktop/Innonsh%20Project/abhinnati-apk/src/features/marketplace/SearchResultsScreen.tsx) | Hardcoded name string matching for avatar palette colors | Deterministic color palette generator based on vendor name hash |
+| [`src/features/vendor/ManageAvailabilityScreen.tsx`](file:///c:/Users/Yash/OneDrive/Desktop/Innonsh%20Project/abhinnati-apk/src/features/vendor/ManageAvailabilityScreen.tsx) | Hardcoded calendar dates (`'2026-07-15'`) | Dynamic dates generated from current ISO date string |
+| [`src/features/vendor/ManageBusinessScreen.tsx`](file:///c:/Users/Yash/OneDrive/Desktop/Innonsh%20Project/abhinnati-apk/src/features/vendor/ManageBusinessScreen.tsx) | Hardcoded address `'Bandra West, Mumbai'` and phone `'+91 9867 626 610'` | Dynamic vendor address and phone |
+| [`src/features/vendor/KycStatusScreen.tsx`](file:///c:/Users/Yash/OneDrive/Desktop/Innonsh%20Project/abhinnati-apk/src/features/vendor/KycStatusScreen.tsx) | Hardcoded locality fallback `'वांद्रे पश्चिम' / 'Bandra West'` | Dynamic active area lookup with localized fallback |
+| [`src/features/auth/OtpVerifyScreen.tsx`](file:///c:/Users/Yash/OneDrive/Desktop/Innonsh%20Project/abhinnati-apk/src/features/auth/OtpVerifyScreen.tsx) | Fallback user ID precedence and unrestricted vendor bypass | Prioritizes verified user ID from API response; restricts `'9999999999'` vendor bypass strictly to `USE_MOCK_API` |
+| [`src/api/client.ts`](file:///c:/Users/Yash/OneDrive/Desktop/Innonsh%20Project/abhinnati-apk/src/api/client.ts) | Hardcoded localhost IP | Platform-aware environment configuration (`process.env.API_BASE_URL` with Android emulator `10.0.2.2:3000` / iOS `localhost:3000` fallbacks) |
+
+### 9.2 Legitimate Constants Retained
+- **`USE_MOCK_API = true`**: Retained in `src/api/client.ts` as a safety guard until explicit cutover authorization is granted.
+- **Offline Geolocation Dataset (`richSearchDataset`)**: Retained in `LocationService.ts` for offline/fallback landmark resolution.
+- **Default Business Hours (`09:00 AM - 06:00 PM`)**: Retained as a safe, sensible initial template for onboarding new vendors.
+- **Security & Upload Limits**: Allowed MIME types (`image/jpeg`, `image/png`, `image/webp`) and maximum file size (5MB profile, 10MB general).
+- **JWT & OTP Expiration Intervals**: Retained security configuration constants (5-minute OTP lifespan, 24-hour token expiry).

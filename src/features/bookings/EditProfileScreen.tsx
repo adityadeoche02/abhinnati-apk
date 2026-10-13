@@ -13,7 +13,7 @@ type NavigationProp = StackNavigationProp<RootStackParamList, 'EditProfile'>;
 export const EditProfileScreen: React.FC = () => {
   const navigation = useNavigation<NavigationProp>();
   const { user, login, preferredLanguage, activeArea } = useAuthStore();
-  const [name, setName] = useState(user?.name || 'Mahesh Kulkarni');
+  const [name, setName] = useState(user?.name || '');
   const [saving, setSaving] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(user?.profileImage || null);
