@@ -140,11 +140,11 @@ export const OtpVerifyScreen: React.FC = () => {
       const formattedPhone = `+91${phoneNumber}`;
       const res = await api.verifyOtp(sessionId, activeCode, formattedPhone);
       if (res.success) {
-        let userId = `user-${Date.now()}`;
-        let role: 'resident' | 'vendor' = res.role as any;
-        let name = isMr ? 'अनामिक रहिवासी' : 'Resident Guest';
+        let userId = (res as any).user?.id || (res as any).userId || `user-${Date.now()}`;
+        let role: 'resident' | 'vendor' = (res.role as any) || (res as any).user?.role || 'resident';
+        let name = (res as any).user?.name || (isMr ? 'अनामिक रहिवासी' : 'Resident Guest');
 
-        if (phoneNumber === '9999999999') {
+        if (USE_MOCK_API && phoneNumber === '9999999999') {
           userId = 'user-patil-owner';
           role = 'vendor';
           name = isMr ? 'पाटील प्लंबर (व्यावसायिक)' : 'Patil Plumbing (Owner)';

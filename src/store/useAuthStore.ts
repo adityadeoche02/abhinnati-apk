@@ -9,6 +9,7 @@ interface UserProfile {
   name: string;
   phone: string;
   role: 'resident' | 'vendor' | 'admin';
+  profileImage?: string | null;
 }
 
 interface AuthState {

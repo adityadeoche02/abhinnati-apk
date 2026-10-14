@@ -110,8 +110,11 @@ export class VendorController {
   static async blockDate(req: NextRequest) {
     try {
       const user = await AuthMiddleware.authorize(req, ['vendor']);
-      const body = await req.json();
-      const result = await this.vendorService.blockDate(user.userId, body.date, body.reason);
+      const body = await req.json().catch(() => ({}));
+      if (!body.date || typeof body.date !== 'string') {
+        throw new BadRequestError('Valid date string (YYYY-MM-DD) is required to block date');
+      }
+      const result = await this.vendorService.blockDate(user.userId, body.date.trim(), body.reason);
       return ApiResponse.success(result, 'Date blocked successfully');
     } catch (error) {
       return ApiResponse.handle(error);
@@ -121,8 +124,11 @@ export class VendorController {
   static async unblockDate(req: NextRequest) {
     try {
       const user = await AuthMiddleware.authorize(req, ['vendor']);
-      const body = await req.json();
-      const result = await this.vendorService.unblockDate(user.userId, body.date);
+      const body = await req.json().catch(() => ({}));
+      if (!body.date || typeof body.date !== 'string') {
+        throw new BadRequestError('Valid date string (YYYY-MM-DD) is required to unblock date');
+      }
+      const result = await this.vendorService.unblockDate(user.userId, body.date.trim());
       return ApiResponse.success(result, 'Date unblocked successfully');
     } catch (error) {
       return ApiResponse.handle(error);
@@ -132,8 +138,17 @@ export class VendorController {
   static async blockSlot(req: NextRequest) {
     try {
       const user = await AuthMiddleware.authorize(req, ['vendor']);
-      const body = await req.json();
-      const result = await this.vendorService.blockSlot(user.userId, body.date, body.startTime, body.endTime, body.reason);
+      const body = await req.json().catch(() => ({}));
+      if (!body.date || !body.startTime || !body.endTime) {
+        throw new BadRequestError('date, startTime, and endTime are required to block slot');
+      }
+      const result = await this.vendorService.blockSlot(
+        user.userId,
+        String(body.date).trim(),
+        String(body.startTime).trim(),
+        String(body.endTime).trim(),
+        body.reason
+      );
       return ApiResponse.success(result, 'Slot blocked successfully');
     } catch (error) {
       return ApiResponse.handle(error);
@@ -143,8 +158,16 @@ export class VendorController {
   static async unblockSlot(req: NextRequest) {
     try {
       const user = await AuthMiddleware.authorize(req, ['vendor']);
-      const body = await req.json();
-      const result = await this.vendorService.unblockSlot(user.userId, body.date, body.startTime, body.endTime);
+      const body = await req.json().catch(() => ({}));
+      if (!body.date || !body.startTime || !body.endTime) {
+        throw new BadRequestError('date, startTime, and endTime are required to unblock slot');
+      }
+      const result = await this.vendorService.unblockSlot(
+        user.userId,
+        String(body.date).trim(),
+        String(body.startTime).trim(),
+        String(body.endTime).trim()
+      );
       return ApiResponse.success(result, 'Slot unblocked successfully');
     } catch (error) {
       return ApiResponse.handle(error);
@@ -198,11 +221,50 @@ export class VendorController {
   static async getMarketplaceVendors(req: NextRequest) {
     try {
       const { prisma } = require('../../../lib/prisma');
-      const vendors = await prisma.vendor.findMany({
-        where: { kycStatus: 'APPROVED' },
-        include: { business: true }
+      const vendorsDb = await prisma.vendor.findMany({
+        where: {
+          kycStatus: { in: ['approved', 'APPROVED'] },
+          deletedAt: null,
+        },
+        include: {
+          business: {
+            include: {
+              services: { where: { isActive: true, deletedAt: null } },
+              locations: { where: { deletedAt: null } },
+              reviews: { where: { deletedAt: null } },
+            },
+          },
+          user: true,
+        },
       });
-      return ApiResponse.success(vendors, 'Marketplace vendors fetched');
+
+      const mapped = vendorsDb.map((v: any) => {
+        const b = v.business;
+        const loc = b?.locations?.[0];
+        return {
+          id: v.id,
+          userId: v.userId,
+          businessNameMr: b?.nameMr || 'नवीन व्यवसाय',
+          businessNameEn: b?.nameEn || 'New Business',
+          categorySlug: 'plumbing',
+          categoryNameMr: 'स्थानिक सेवा',
+          categoryNameEn: 'Local Service',
+          descriptionMr: b?.descriptionMr || '',
+          descriptionEn: b?.descriptionEn || '',
+          latitude: loc?.latitude || 18.5204,
+          longitude: loc?.longitude || 73.8567,
+          areaId: loc?.area || 'area-kothrud',
+          kycStatus: v.kycStatus,
+          kycDocsUrl: v.kycDocsUrl,
+          isFullyBooked: b?.vacationMode || v.vacationMode || false,
+          ratingAvg: b?.ratingAvg || v.ratingAvg || 4.5,
+          reviewsCount: b?.reviewsCount || v.reviewsCount || 0,
+          services: b?.services || [],
+          reviews: b?.reviews || [],
+        };
+      });
+
+      return ApiResponse.success(mapped, 'Marketplace vendors fetched');
     } catch (error) {
       return ApiResponse.handle(error);
     }
@@ -211,14 +273,78 @@ export class VendorController {
   static async getPublicVendorProfile(req: NextRequest, { params }: { params: { id: string } }) {
     try {
       const { prisma } = require('../../../lib/prisma');
-      const vendor = await prisma.vendor.findUnique({
-        where: { id: params.id },
-        include: { business: true, services: true }
+      const vendor = await prisma.vendor.findFirst({
+        where: {
+          OR: [{ id: params.id }, { business: { id: params.id } }, { userId: params.id }],
+          deletedAt: null,
+        },
+        include: {
+          business: {
+            include: {
+              services: { where: { isActive: true, deletedAt: null } },
+              reviews: { where: { deletedAt: null }, orderBy: { createdAt: 'desc' } },
+              locations: { where: { deletedAt: null } },
+            },
+          },
+          user: true,
+        },
       });
+
       if (!vendor) {
         return ApiResponse.error('Vendor not found', 404);
       }
-      return ApiResponse.success({ vendor, business: vendor.business, services: vendor.services }, 'Vendor profile fetched');
+
+      const b = vendor.business;
+      const loc = b?.locations?.[0];
+
+      const formatted = {
+        id: vendor.id,
+        userId: vendor.userId,
+        businessId: b?.id,
+        businessNameMr: b?.nameMr || 'नवीन व्यवसाय',
+        businessNameEn: b?.nameEn || 'New Business',
+        descriptionMr: b?.descriptionMr || '',
+        descriptionEn: b?.descriptionEn || '',
+        logoUrl: b?.logoUrl,
+        coverPhotoUrl: b?.coverPhotoUrl,
+        galleryUrls: b?.galleryUrls ? JSON.parse(b.galleryUrls) : [],
+        whatsappNumber: b?.whatsappNumber,
+        phone: vendor.user?.phone || '',
+        email: b?.email || vendor.user?.email || '',
+        latitude: loc?.latitude || 18.5204,
+        longitude: loc?.longitude || 73.8567,
+        formattedAddress: loc?.formattedAddress || '',
+        areaId: loc?.area || 'area-kothrud',
+        ratingAvg: b?.ratingAvg || vendor.ratingAvg || 4.5,
+        reviewsCount: b?.reviewsCount || vendor.reviewsCount || 0,
+        kycStatus: vendor.kycStatus,
+        isFullyBooked: b?.vacationMode || vendor.vacationMode || false,
+        vacationMode: b?.vacationMode || vendor.vacationMode || false,
+        services: (b?.services || []).map((s: any) => ({
+          id: s.id,
+          name_mr: s.nameMr,
+          name_en: s.nameEn,
+          name: s.nameEn,
+          price: s.price,
+          duration_mins: s.durationMins,
+          description_mr: s.descriptionMr,
+          description_en: s.descriptionEn,
+          description: s.descriptionEn,
+          isActive: s.isActive,
+        })),
+        reviews: (b?.reviews || []).map((r: any) => ({
+          id: r.id,
+          rating: r.rating,
+          comment: r.comment || '',
+          text: r.comment || '',
+          createdAt: r.createdAt.toISOString(),
+          date: r.createdAt.toISOString().split('T')[0],
+        })),
+        vendor,
+        business: b,
+      };
+
+      return ApiResponse.success(formatted, 'Vendor profile fetched');
     } catch (error) {
       return ApiResponse.handle(error);
     }

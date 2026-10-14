@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, ActivityIndicator, Pressable } from 'react-native';
+import { StyleSheet, Text, View, ActivityIndicator, Pressable, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useTranslation } from 'react-i18next';
@@ -43,13 +43,21 @@ export const PaymentGatewayScreen: React.FC = () => {
   };
 
   const handlePayment = async () => {
-    const finalVendorId = selectedVendorId || 'vendor-1';
-    const finalVendorName = selectedVendorName || 'Aai’s Bakery';
-    const finalServiceId = selectedService?.id || 'srv-aai-1';
-    const finalServiceName = selectedService ? (isMr ? selectedService.name_mr : selectedService.name_en) : (isMr ? 'कस्टम केक' : 'Custom cake');
-    const finalPrice = selectedService?.price || 600;
-    const finalDate = selectedDate || 'Tue 25';
-    const finalTime = selectedTime || '12:30 PM';
+    if (!selectedVendorId || !selectedService || !selectedDate || !selectedTime) {
+      Alert.alert(
+        isMr ? 'त्रुटी' : 'Error',
+        isMr ? 'कृपया सेवा, तारीख आणि वेळ निवडा.' : 'Please select service, date, and time.'
+      );
+      return;
+    }
+
+    const finalVendorId = selectedVendorId;
+    const finalVendorName = selectedVendorName || (isMr ? 'व्यवसायिक' : 'Vendor');
+    const finalServiceId = selectedService.id;
+    const finalServiceName = isMr ? selectedService.name_mr : selectedService.name_en;
+    const finalPrice = selectedService.price || 0;
+    const finalDate = selectedDate;
+    const finalTime = selectedTime;
 
     setProcessing(true);
     // Simulate gateway delay
@@ -57,9 +65,9 @@ export const PaymentGatewayScreen: React.FC = () => {
 
     try {
       const newBooking = await api.createBooking({
-        userId: user?.id || 'guest-user',
+        userId: user?.id,
         userName: user?.name || t('bookings.anonymousUser'),
-        userPhone: user?.phone || '+910000000000',
+        userPhone: user?.phone || '',
         vendorId: finalVendorId,
         vendorName: finalVendorName,
         serviceId: finalServiceId,
@@ -82,8 +90,8 @@ export const PaymentGatewayScreen: React.FC = () => {
     }
   };
 
-  const finalPrice = selectedService?.price || 600;
-  const finalServiceName = selectedService ? (isMr ? selectedService.name_mr : selectedService.name_en) : (isMr ? 'कस्टम केक' : 'Custom cake');
+  const finalPrice = selectedService?.price || 0;
+  const finalServiceName = selectedService ? (isMr ? selectedService.name_mr : selectedService.name_en) : (isMr ? 'निवडलेली सेवा' : 'Selected Service');
   
   // Format Date and Time
   const formatTimeSlot = (time: string) => {

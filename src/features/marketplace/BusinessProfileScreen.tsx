@@ -184,9 +184,6 @@ export const BusinessProfileScreen: React.FC = () => {
       try {
         const data = await api.getVendorById(vendorId);
         setVendor(data);
-        if (vendorId === 'vendor-aai' && data && data.services.length > 0) {
-          setSelectedServices([data.services[0]]);
-        }
       } catch (err) {
         console.error(err);
       } finally {
@@ -270,10 +267,8 @@ export const BusinessProfileScreen: React.FC = () => {
   const getSelectedText = () => {
     if (selectedServices.length === 1) {
       const s = selectedServices[0];
-      if (s.id === 'srv-aai-1') return isMr ? 'कस्टम केक निवडले' : 'Custom cake selected';
-      if (s.id === 'srv-aai-2') return isMr ? 'ताजा पाव निवडले' : 'Daily bread selected';
-      if (s.id === 'srv-aai-3') return isMr ? 'गोड बॉक्स निवडले' : 'Sweets box selected';
-      return isMr ? `${s.name_mr} निवडले` : `${s.name_en} selected`;
+      const serviceName = isMr ? (s.name_mr || s.name_en) : (s.name_en || s.name_mr);
+      return isMr ? `${serviceName} निवडले` : `${serviceName} selected`;
     }
     return t('marketplace.servicesSelected_other', { count: selectedServices.length });
   };
@@ -296,7 +291,7 @@ export const BusinessProfileScreen: React.FC = () => {
           </Pressable>
           
           {/* New Tag */}
-          {(vendor.reviewsCount <= 5 || vendor.id === 'vendor-aai') && (
+          {vendor.reviewsCount <= 5 && (
             <View style={styles.newTag}>
               <Star size={11} color="#9A5A12" fill="#9A5A12" style={styles.tagStar} />
               <Text style={styles.tagText}>{t('marketplace.newTag')}</Text>

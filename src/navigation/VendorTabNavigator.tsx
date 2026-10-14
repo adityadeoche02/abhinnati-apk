@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { StyleSheet, Text, View, Pressable } from 'react-native';
+import { StyleSheet, Text, View, Pressable, useWindowDimensions } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming, Easing } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -21,12 +21,32 @@ const CustomVendorTabBar: React.FC<any> = ({ state, descriptors, navigation }) =
   const { t } = useTranslation();
   const { preferredLanguage } = useAuthStore();
   const insets = useSafeAreaInsets();
+  const { width: windowWidth } = useWindowDimensions();
+
+  // Responsive container width: standard ~361px, responsive across devices
+  const containerWidth = Math.min(Math.max(windowWidth - 32, 320), 380);
+  const tabWidth = containerWidth / 4;
+  const capsuleMargin = 4;
+  const capsuleWidth = tabWidth - (capsuleMargin * 2);
+
+  const translateX = useSharedValue(state.index * tabWidth + capsuleMargin);
+
+  useEffect(() => {
+    translateX.value = withTiming(state.index * tabWidth + capsuleMargin, {
+      duration: 250,
+      easing: Easing.inOut(Easing.ease),
+    });
+  }, [state.index, tabWidth, capsuleMargin]);
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ translateX: translateX.value }],
+    };
+  });
 
   const getIcon = (routeName: string, isFocused: boolean) => {
-    const size = 22;
-    const activeColor = '#E58A2B';
-    const inactiveColor = '#A89A82';
-    const color = isFocused ? activeColor : inactiveColor;
+    const size = 20;
+    const iconColor = isFocused ? '#2A2520' : '#3D362E';
 
     switch (routeName) {
       case 'VendorDashboard':
@@ -34,7 +54,7 @@ const CustomVendorTabBar: React.FC<any> = ({ state, descriptors, navigation }) =
       case 'VendorBookings':
         return <CustomCalendarIcon isFocused={isFocused} size={size} />;
       case 'ManageServices':
-        return <Menu size={size} color={color} />;
+        return <Menu size={size} color={iconColor} strokeWidth={isFocused ? 2.4 : 2.0} />;
       case 'VendorProfile':
         return <CustomProfileIcon isFocused={isFocused} size={size} />;
       default:
@@ -58,41 +78,62 @@ const CustomVendorTabBar: React.FC<any> = ({ state, descriptors, navigation }) =
   };
 
   return (
-    <View style={[styles.tabBarWrapper, { paddingBottom: Math.max(insets.bottom, 16), height: Math.max(insets.bottom, 16) + 66 }]}>
+    <View
+      style={[
+        styles.tabBarWrapper,
+        {
+          width: containerWidth,
+          bottom: Math.max(insets.bottom, 18) + 8,
+        },
+      ]}
+    >
       <View style={styles.tabBarContainer}>
-        {state.routes.map((route: any, index: number) => {
-          const isFocused = state.index === index;
+        {/* Animated Capsule Background behind active tab */}
+        <Animated.View
+          pointerEvents="none"
+          style={[styles.activeCapsule, { width: capsuleWidth }, animatedStyle]}
+        />
 
-          const onPress = () => {
-            const event = navigation.emit({
-              type: 'tabPress',
-              target: route.key,
-              canPreventDefault: true,
-            });
+        {/* 4 Tabs Row */}
+        <View style={styles.tabsRow}>
+          {state.routes.map((route: any, index: number) => {
+            const isFocused = state.index === index;
 
-            if (!isFocused && !event.defaultPrevented) {
-              navigation.navigate(route.name);
-            }
-          };
+            const onPress = () => {
+              const event = navigation.emit({
+                type: 'tabPress',
+                target: route.key,
+                canPreventDefault: true,
+              });
 
-          return (
-            <Pressable
-              key={route.key}
-              onPress={onPress}
-              style={styles.tabButton}
-            >
-              <View style={styles.iconContainer}>
-                {getIcon(route.name, isFocused)}
-              </View>
-              <Text style={[
-                styles.tabLabel,
-                isFocused ? styles.activeTabLabel : styles.inactiveTabLabel
-              ]}>
-                {getLabel(route.name)}
-              </Text>
-            </Pressable>
-          );
-        })}
+              if (!isFocused && !event.defaultPrevented) {
+                navigation.navigate(route.name);
+              }
+            };
+
+            return (
+              <Pressable
+                key={route.key}
+                onPress={onPress}
+                style={styles.tabButton}
+                android_ripple={{ color: 'transparent' }}
+              >
+                <View style={styles.iconContainer}>
+                  {getIcon(route.name, isFocused)}
+                </View>
+                <Text
+                  numberOfLines={1}
+                  style={[
+                    styles.tabLabel,
+                    isFocused ? styles.activeTabLabel : styles.inactiveTabLabel,
+                  ]}
+                >
+                  {getLabel(route.name)}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
       </View>
     </View>
   );
@@ -116,23 +157,38 @@ export const VendorTabNavigator: React.FC = () => {
 
 const styles = StyleSheet.create({
   tabBarWrapper: {
-    backgroundColor: '#FFFFFF',
-    borderTopWidth: 1.5,
-    borderTopColor: '#EFE3CC',
-    justifyContent: 'center',
+    position: 'absolute',
+    height: 70,
+    alignSelf: 'center',
+    zIndex: 9999,
   },
   tabBarContainer: {
+    width: '100%',
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: '#FFFFFF',
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-around',
-    height: '100%',
-    width: '100%',
+    borderWidth: 1.5,
+    borderColor: '#EFE3CC',
+    shadowColor: '#2A2520',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 15,
+    elevation: 4,
   },
-  iconContainer: {
-    width: 24,
-    height: 24,
-    justifyContent: 'center',
+  activeCapsule: {
+    position: 'absolute',
+    height: 60,
+    top: 5,
+    borderRadius: 30,
+    backgroundColor: '#D0D0D0',
+  },
+  tabsRow: {
+    flexDirection: 'row',
     alignItems: 'center',
+    width: '100%',
+    height: '100%',
   },
   tabButton: {
     flex: 1,
@@ -142,20 +198,28 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     gap: 4,
   },
+  iconContainer: {
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   tabLabel: {
     fontSize: 11,
-    lineHeight: 18,
+    fontFamily: 'Mukta-Medium',
+    fontWeight: '500',
+    color: '#6B5F4E',
     textAlign: 'center',
   },
   activeTabLabel: {
     fontFamily: 'Mukta-Bold',
     fontWeight: '700',
-    color: '#E58A2B',
+    color: '#2A2520',
   },
   inactiveTabLabel: {
     fontFamily: 'Mukta-Medium',
     fontWeight: '500',
-    color: '#A89A82',
+    color: '#6B5F4E',
   },
 });
 

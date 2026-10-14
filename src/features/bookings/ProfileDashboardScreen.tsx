@@ -37,9 +37,9 @@ export const ProfileDashboardScreen: React.FC = () => {
     subtextManage: t('profile.manageBusinessSub'),
     btnSwitchMode: t('profile.switchToVendor'),
     btnRegisterVendor: t('profile.registerVendor'),
-    defaultName: user?.name || 'Sneha Patil',
-    defaultPhone: user?.phone || '+91 9867 626 610',
-    defaultLocation: activeArea ? (isMr ? activeArea.name_mr : activeArea.name_en) : 'Bandra West',
+    defaultName: user?.name || (user?.phone ? user.phone : (isMr ? 'रहिवासी' : 'Resident')),
+    defaultPhone: user?.phone || '',
+    defaultLocation: activeArea ? (isMr ? activeArea.name_mr : activeArea.name_en) : (isMr ? 'परिसर निवडलेला नाही' : 'No area selected'),
   };
 
   const fetchVendorStatus = async () => {
@@ -92,10 +92,18 @@ export const ProfileDashboardScreen: React.FC = () => {
         {/* User Card */}
         <View style={styles.profileCard}>
           <View style={styles.avatarCircle}>
-            <Image 
-              source={{ uri: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150' }} 
-              style={styles.avatarImage} 
-            />
+            {user?.profileImage ? (
+              <Image
+                source={{ uri: user.profileImage }}
+                style={styles.avatarImage}
+              />
+            ) : (
+              <View style={[styles.avatarImage, { backgroundColor: '#FDECD4', justifyContent: 'center', alignItems: 'center' }]}>
+                <Text style={{ fontSize: 24, fontWeight: '700', color: '#9A5A12' }}>
+                  {(user?.name || 'U').charAt(0).toUpperCase()}
+                </Text>
+              </View>
+            )}
           </View>
           
           <View style={styles.userInfo}>
@@ -120,7 +128,7 @@ export const ProfileDashboardScreen: React.FC = () => {
               )}
             </View>
             
-            <Text style={styles.vendorTitle}>{vendor ? (isMr ? vendor.businessNameMr : vendor.businessNameEn) : 'Aai’s Bakery'}</Text>
+            <Text style={styles.vendorTitle}>{vendor ? (isMr ? (vendor.businessNameMr || vendor.businessNameEn) : vendor.businessNameEn) : (isMr ? 'व्यवसाय नोंदणी' : 'Business Registration')}</Text>
             
             <View style={[
               styles.approvedBadge,

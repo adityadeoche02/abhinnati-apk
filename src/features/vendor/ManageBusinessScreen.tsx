@@ -63,8 +63,8 @@ export const ManageBusinessScreen: React.FC = () => {
         setSelectedCat(cat);
         
         setDescription(isMr ? (profile.descriptionMr || profile.descriptionEn) : profile.descriptionEn);
-        setAddress(profile.formattedAddress || 'Bandra West, Mumbai');
-        setContactNumber(profile.phone || user.phone || '+91 9867 626 610');
+        setAddress(profile.formattedAddress || profile.area || '');
+        setContactNumber(profile.phone || user.phone || '');
         
         if (profile.galleryUrls) {
           try {
@@ -72,7 +72,7 @@ export const ManageBusinessScreen: React.FC = () => {
             if (Array.isArray(list)) setGallery(list);
           } catch {}
         }
-        setCoverPhoto(profile.coverPhotoUrl || 'https://images.unsplash.com/photo-1554415707-6e8cfc93fe23?w=1000');
+        setCoverPhoto(profile.coverPhotoUrl || null);
       }
     } catch (err) {
       console.warn(err);

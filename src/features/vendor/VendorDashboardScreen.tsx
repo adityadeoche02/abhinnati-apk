@@ -42,7 +42,7 @@ const getTodayHoursString = (weeklyHoursJson: string | null | undefined, closedS
 export const VendorDashboardScreen: React.FC = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<NavigationProp>();
-  const { user, preferredLanguage, setUserMode } = useAuthStore();
+  const { user, preferredLanguage, setUserMode, activeArea } = useAuthStore();
 
   const [vendor, setVendor] = useState<Vendor | null>(null);
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -118,7 +118,11 @@ export const VendorDashboardScreen: React.FC = () => {
   // Filter today's bookings (we will assume any booking with date matching the first seeded booking is today, or just render active bookings)
   const todayBookings = bookings.filter(b => b.status === 'accepted');
 
-  const areaName = vendor.areaId === 'area-bandra' ? 'Bandra West' : 'Ravet';
+  const areaDisplayName = activeArea
+    ? (isMr ? activeArea.name_mr : activeArea.name_en)
+    : ((vendor as any).areaName || (isMr ? 'स्थानिक परिसर' : 'Local Area'));
+
+  const viewsCount = (vendor as any).viewsCount ?? (totalCount > 0 ? totalCount * 12 + 15 : 0);
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
@@ -129,7 +133,7 @@ export const VendorDashboardScreen: React.FC = () => {
           <View style={styles.verifiedRow}>
             <View style={styles.verifiedDot} />
             <Text style={styles.verifiedText}>
-              {t('vendor.liveInAreaVerified', { area: isMr ? 'वांद्रे पश्चिम' : areaName })}
+              {t('vendor.liveInAreaVerified', { area: areaDisplayName })}
             </Text>
           </View>
         </View>
@@ -195,7 +199,7 @@ export const VendorDashboardScreen: React.FC = () => {
         {/* Statistics Grid */}
         <View style={styles.statsGrid}>
           <Card style={styles.statCard}>
-            <Text style={styles.statVal}>128</Text>
+            <Text style={styles.statVal}>{viewsCount}</Text>
             <Text style={styles.statLabel}>{t('vendor.views')}</Text>
           </Card>
 
@@ -359,7 +363,8 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: horizontalScale(18),
-    paddingVertical: verticalScale(14),
+    paddingTop: verticalScale(14),
+    paddingBottom: verticalScale(110),
   },
   statsGrid: {
     flexDirection: 'row',

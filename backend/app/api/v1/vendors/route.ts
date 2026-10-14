@@ -71,6 +71,12 @@ export async function GET(request: Request) {
       };
     });
 
+    const userId = searchParams.get('userId');
+    if (userId) {
+      const single = mappedVendors.find(v => v.userId === userId || v.id === userId);
+      return NextResponse.json({ success: true, data: single || null });
+    }
+
     // Filter by area and category if requested
     if (areaId) {
        mappedVendors = mappedVendors.filter(v => v.areaId === areaId);

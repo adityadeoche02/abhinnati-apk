@@ -133,7 +133,19 @@ export const MyAreaFeedScreen: React.FC = () => {
 
   const loadPosts = async () => {
     try {
-      const areaId = activeArea?.id || 'e2c0e8a7-3df8-4bf8-b9a3-5c21f7b8c7a1';
+      let areaId = activeArea?.id;
+      if (!areaId) {
+        try {
+          const areas = await api.getAreas();
+          if (Array.isArray(areas) && areas.length > 0) {
+            areaId = areas[0].id;
+          }
+        } catch {}
+      }
+      if (!areaId) {
+        setLoading(false);
+        return;
+      }
 
       // 1. Fetch community posts
       const res = await api.getPosts(areaId);
@@ -142,9 +154,9 @@ export const MyAreaFeedScreen: React.FC = () => {
       const mappedPosts: MixedFeedItem[] = postsData.map((post: any) => ({
         id: post.id,
         feedType: 'post',
-        authorName: post.authorName || 'Resident User',
+        authorName: post.authorName || (isMr ? 'स्थानिक रहिवासी' : 'Resident User'),
         avatar: post.authorAvatar || post.authorName?.[0] || 'U',
-        location: isMr ? 'वांद्रे पश्चिम' : 'Bandra West',
+        location: post.areaName || localityName || (isMr ? 'स्थानिक' : 'Local'),
         tag: post.tag || 'Community',
         tagType: post.tagType || 'local_issue',
         content: post.content || post.content_en || post.content_mr || '',
